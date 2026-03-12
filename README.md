@@ -258,7 +258,7 @@ Available events include:
 Clone the repository:
 
 ```bash
-git clone https://github.com/chatyshop/chaty_player.git
+git clone https://github.com/chatyshop/chatyplayer.git
 ```
 
 Install dependencies:
