@@ -38,15 +38,15 @@
   "author": "Chaty Technologies",
   "license": "MIT",
 
-  "homepage": "https://github.com/chatyshop/chaty_player",
+  "homepage": "https://github.com/chatyshop/chatyplayer",
 
   "repository": {
     "type": "git",
-    "url": "https://github.com/chatyshop/chaty_player.git"
+    "url": "https://github.com/chatyshop/chatyplayer.git"
   },
 
   "bugs": {
-    "url": "https://github.com/chatyshop/chaty_player/issues"
+    "url": "https://github.com/chatyshop/chatyplayer/issues"
   },
 
   "engines": {

@@ -1,35 +1,56 @@
 /**
  * ChatyPlayer v1.0
- * Public API Wrapper
+ * Public API Wrapper (Production Ready)
  * ----------------------------------------
  * - Safe controlled interface
+ * - Strong TypeScript typing
  * - Input validation
- * - No direct internal exposure
- * - Event subscription
+ * - No internal exposure
+ * - Defensive feature checks
+ * - Event subscription wrapper
  */
 
-import type { Player } from '../core/Player';
-import type { EventEmitter } from '../core/events';
+import type { Player } from '../core/Player'
+import type { EventEmitter, PlayerEventMap } from '../core/events'
+
+type EventKey = keyof PlayerEventMap
 
 export interface ChatyPlayerAPI {
-  play(): Promise<void>;
-  pause(): void;
-  seek(time: number): void;
-  setVolume(volume: number): void;
-  mute(): void;
-  unmute(): void;
-  toggleFullscreen(): void;
-  toggleTheater(): void;
-  togglePiP(): void;
-  setSpeed(rate: number): void;
-  setQuality(type: 'mp4' | 'webm' | 'ogg'): void;
-  enableSubtitle(lang: string): void;
-  disableSubtitles(): void;
-  captureScreenshot(): string | null;
-  downloadScreenshot(): void;
-  getTimestampLink(): string | null;
-  on(event: string, handler: (...args: any[]) => void): void;
-  off(event: string, handler: (...args: any[]) => void): void;
+  play(): Promise<void>
+  pause(): void
+  seek(time: number): void
+  setVolume(volume: number): void
+  mute(): void
+  unmute(): void
+
+  toggleFullscreen(): void
+  toggleTheater(): void
+  togglePiP(): void
+
+  setSpeed(rate: number): void
+  setQuality(label: string): void
+
+  enableSubtitle(lang: string): void
+  disableSubtitles(): void
+
+  captureScreenshot(): string | null
+  downloadScreenshot(): void
+
+  getTimestampLink(): string | null
+
+  on<K extends EventKey>(
+    event: K,
+    handler: PlayerEventMap[K] extends void
+      ? () => void
+      : (payload: PlayerEventMap[K]) => void
+  ): void
+
+  off<K extends EventKey>(
+    event: K,
+    handler: PlayerEventMap[K] extends void
+      ? () => void
+      : (payload: PlayerEventMap[K]) => void
+  ): void
 }
 
 export function createPublicAPI(
@@ -37,138 +58,153 @@ export function createPublicAPI(
   events?: EventEmitter
 ): ChatyPlayerAPI {
 
-  const video = player.getVideo();
+  const video = player.getVideo()
 
-  const safeNumber = (value: any, fallback = 0): number => {
-    const num = Number(value);
-    return isFinite(num) ? num : fallback;
-  };
+  const safeNumber = (value: unknown, fallback = 0): number => {
+    const num = Number(value)
+    return Number.isFinite(num) ? num : fallback
+  }
+
+  const callFeature = (method: string, ...args: unknown[]) => {
+    const instance = player as unknown as Record<string, unknown>
+    const fn = instance[method]
+
+    if (typeof fn === 'function') {
+      try {
+        ;(fn as (...args: unknown[]) => unknown).apply(player, args)
+      } catch {
+        /* silent fail */
+      }
+    }
+  }
 
   return {
+
     async play() {
       try {
-        await player.play();
+        await player.play()
       } catch {
-        // Autoplay restriction, fail silently
+        /* autoplay restriction safe fail */
       }
     },
 
     pause() {
-      player.pause();
+      player.pause()
     },
 
     seek(time: number) {
-      const duration = video.duration || 0;
+      const duration = video.duration || 0
+
       const safeTime = Math.min(
         Math.max(0, safeNumber(time)),
         duration
-      );
-      player.seek(safeTime);
+      )
+
+      player.seek(safeTime)
     },
 
     setVolume(volume: number) {
       const safeVol = Math.min(
         Math.max(0, safeNumber(volume)),
         1
-      );
-      video.volume = safeVol;
+      )
+
+      video.volume = safeVol
     },
 
     mute() {
-      video.muted = true;
+      video.muted = true
     },
 
     unmute() {
-      video.muted = false;
+      video.muted = false
     },
 
     toggleFullscreen() {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.toggleFullscreen === 'function') {
-        anyPlayer.toggleFullscreen();
-      }
+      callFeature('toggleFullscreen')
     },
 
     toggleTheater() {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.toggleTheater === 'function') {
-        anyPlayer.toggleTheater();
-      }
+      callFeature('toggleTheater')
     },
 
     togglePiP() {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.togglePiP === 'function') {
-        anyPlayer.togglePiP();
-      }
+      callFeature('togglePiP')
     },
 
     setSpeed(rate: number) {
-      const anyPlayer = player as any;
       const safeRate = Math.min(
         Math.max(0.25, safeNumber(rate)),
         4
-      );
+      )
 
-      if (typeof anyPlayer.setSpeed === 'function') {
-        anyPlayer.setSpeed(safeRate);
-      }
+      callFeature('setSpeed', safeRate)
     },
 
-    setQuality(type: 'mp4' | 'webm' | 'ogg') {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.setQuality === 'function') {
-        anyPlayer.setQuality(type);
-      }
+    setQuality(label: string) {
+      if (typeof label !== 'string') return
+      callFeature('setQuality', label)
     },
 
     enableSubtitle(lang: string) {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.enableSubtitle === 'function') {
-        anyPlayer.enableSubtitle(lang);
-      }
+      if (typeof lang !== 'string') return
+      callFeature('enableSubtitle', lang)
     },
 
     disableSubtitles() {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.disableSubtitles === 'function') {
-        anyPlayer.disableSubtitles();
-      }
+      callFeature('disableSubtitles')
     },
 
     captureScreenshot() {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.captureScreenshot === 'function') {
-        return anyPlayer.captureScreenshot();
+      const instance = player as unknown as Record<string, unknown>
+
+      const fn = instance['captureScreenshot']
+
+      if (typeof fn === 'function') {
+        try {
+          const result = fn.call(player)
+          return typeof result === 'string' ? result : null
+        } catch {
+          return null
+        }
       }
-      return null;
+
+      return null
     },
 
     downloadScreenshot() {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.downloadScreenshot === 'function') {
-        anyPlayer.downloadScreenshot();
-      }
+      callFeature('downloadScreenshot')
     },
 
     getTimestampLink() {
-      const anyPlayer = player as any;
-      if (typeof anyPlayer.getTimestampLink === 'function') {
-        return anyPlayer.getTimestampLink();
+      const instance = player as unknown as Record<string, unknown>
+      const fn = instance['getTimestampLink']
+
+      if (typeof fn === 'function') {
+        try {
+          const result = fn.call(player)
+          return typeof result === 'string' ? result : null
+        } catch {
+          return null
+        }
       }
-      return null;
+
+      return null
     },
 
-    on(event: string, handler: (...args: any[]) => void) {
-      if (!events) return;
-      if (typeof handler !== 'function') return;
-      events.on(event as any, handler);
+    on(event, handler) {
+      if (!events) return
+      if (typeof handler !== 'function') return
+
+      events.on(event, handler as any)
     },
 
-    off(event: string, handler: (...args: any[]) => void) {
-      if (!events) return;
-      if (typeof handler !== 'function') return;
-      events.off(event as any, handler);
+    off(event, handler) {
+      if (!events) return
+      if (typeof handler !== 'function') return
+
+      events.off(event, handler as any)
     }
-  };
+
+  }
 }
