@@ -1,107 +1,132 @@
 /**
  * ChatyPlayer v1.0
- * Entry Point
+ * Entry Point (Production Ready)
  * ----------------------------------------
- * - Auto initializes all .chaty-player elements
- * - Safe dataset parsing
- * - Prevents double initialization
- * - Supports manual initialization
+ * - React safe (no auto-init conflicts)
+ * - Optional auto-init support (disabled by default)
+ * - Prevents duplicate initialization
+ * - Secure config parsing
+ * - CSS bundled safely
  */
 
-import { Player } from './core/Player';
-import { parseConfig } from './core/config';
+import "./styles/chatyplayer.css";
+import { Player } from "./core/Player";
+import { parseConfig } from "./core/config";
 
 declare global {
   interface Window {
-    ChatyPlayer?: any;
+    ChatyPlayer?: ChatyPlayerAPI;
   }
 }
 
-const PLAYER_CLASS = 'chaty-player';
-const INIT_ATTR = 'data-chaty-initialized';
+/* =========================================
+   Types
+========================================= */
+type ChatyPlayerAPI = {
+  create: (container: HTMLElement) => Player | null;
+  autoInit: () => void;
+  version: string;
+};
 
-/**
- * Securely initialize a single player instance
- */
+const PLAYER_CLASS = "chaty-player";
+const INIT_ATTR = "data-chaty-initialized";
+
+/* =========================================
+   Initialize Single Player
+========================================= */
 function initPlayer(container: HTMLElement): Player | null {
   try {
+    if (!(container instanceof HTMLElement)) {
+      throw new Error("Invalid container element");
+    }
+
     // Prevent duplicate initialization
     if (container.hasAttribute(INIT_ATTR)) {
       return null;
     }
 
-    // Parse sanitized config
+    // Parse safe config
     const config = parseConfig(container);
 
-    // Create player instance
+    // Create player
     const player = new Player(container, config);
 
-    // Mark as initialized
-    container.setAttribute(INIT_ATTR, 'true');
+    // Mark initialized
+    container.setAttribute(INIT_ATTR, "true");
 
     return player;
   } catch (error) {
-    console.error('[ChatyPlayer] Initialization failed:', error);
+    console.error("[ChatyPlayer] Initialization failed:", error);
     return null;
   }
 }
 
-/**
- * Auto-initialize all players on page
- */
+/* =========================================
+   Auto Init (OPTIONAL - manual call only)
+========================================= */
 function autoInit(): void {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
 
-  const elements = document.querySelectorAll<HTMLElement>(`.${PLAYER_CLASS}`);
+  const elements = document.querySelectorAll<HTMLElement>(
+    `.${PLAYER_CLASS}`
+  );
 
   elements.forEach((el) => {
     initPlayer(el);
   });
 }
 
-/**
- * Manual initialization API
- */
+/* =========================================
+   Public API (React Safe)
+========================================= */
 function create(container: HTMLElement): Player | null {
   if (!(container instanceof HTMLElement)) {
-    console.error('[ChatyPlayer] Invalid container provided.');
+    console.error("[ChatyPlayer] Invalid container provided.");
     return null;
+  }
+
+  // Allow safe re-init (React / SPA safe)
+  if (container.hasAttribute(INIT_ATTR)) {
+    container.removeAttribute(INIT_ATTR);
+    container.textContent = ""; // safe DOM cleanup
   }
 
   return initPlayer(container);
 }
 
-/**
- * Initialize when DOM is ready
- */
-function onReady(): void {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoInit, { once: true });
-  } else {
-    autoInit();
+/* =========================================
+   API Object (Single Source of Truth)
+========================================= */
+const ChatyPlayer: ChatyPlayerAPI = {
+  create,
+  autoInit,
+  version: "1.0.0",
+};
+
+/* =========================================
+   Expose Global API (Safe)
+========================================= */
+function exposeGlobal(): void {
+  if (typeof window === "undefined") return;
+
+  // Prevent overwriting existing instance
+  if (!window.ChatyPlayer) {
+    window.ChatyPlayer = ChatyPlayer;
   }
 }
 
-/**
- * Expose global API
- */
-function exposeGlobal(): void {
-  if (typeof window === 'undefined') return;
-
-  window.ChatyPlayer = {
-    create,
-    version: '1.0.0'
-  };
-}
-
-/**
- * Bootstrap
- */
+/* =========================================
+   Bootstrap (NO auto-init)
+========================================= */
 (function bootstrap() {
   try {
-    onReady();
     exposeGlobal();
   } catch (error) {
-    console.error('[ChatyPlayer] Bootstrap error:', error);
+    console.error("[ChatyPlayer] Bootstrap error:", error);
   }
 })();
+
+/* =========================================
+   Export (CRITICAL for ES/CJS/UMD)
+========================================= */
+export { ChatyPlayer };

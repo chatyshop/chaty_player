@@ -5,7 +5,7 @@ export default defineConfig({
   build: {
     target: 'es2019',
 
-    // Disable sourcemaps for production library
+    // Disable sourcemaps for production
     sourcemap: false,
 
     // Fast and safe minification
@@ -19,33 +19,41 @@ export default defineConfig({
 
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
+
+      // Global name for CDN (window.ChatyPlayer)
       name: 'ChatyPlayer',
 
-      formats: ['es', 'cjs'],
+      // ✅ Added UMD for browser/CDN support
+      formats: ['es', 'cjs', 'umd'],
 
-      fileName: (format) =>
-        format === 'es'
-          ? 'chatyplayer.es.js'
-          : 'chatyplayer.cjs.js'
+      // ✅ Type-safe + production-safe naming
+      fileName: (format) => {
+        const map = {
+          es: 'chatyplayer.es.js',
+          cjs: 'chatyplayer.cjs.js',
+          umd: 'chatyplayer.umd.js'
+        } as const
+
+        return map[format as keyof typeof map]
+      }
     },
 
     rollupOptions: {
-      // No external dependencies yet
+      // Keep empty unless you add deps later
       external: [],
 
       output: {
         exports: 'named',
 
-        // stable asset output
+        // Stable CSS output
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.endsWith('.css')) {
             return 'styles/[name][extname]'
           }
-
           return '[name][extname]'
         },
 
-        // improve tree shaking
+        // Better optimized output
         generatedCode: {
           constBindings: true
         }
@@ -60,7 +68,7 @@ export default defineConfig({
   },
 
   esbuild: {
-    // Remove license comments from bundles
+    // Remove license comments
     legalComments: 'none'
   }
 })

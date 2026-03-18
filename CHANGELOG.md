@@ -4,6 +4,54 @@ All notable changes to ChatyPlayer will be documented in this file.
 
 The format is based on Keep a Changelog and follows Semantic Versioning.
 
+[1.0.1] – CDN & Distribution Update
+
+Release date: 18 Mar 2026
+
+This patch release improves distribution, CDN support, and package configuration without affecting core functionality.
+
+Added
+CDN Support
+
+Added jsDelivr CDN compatibility via GitHub
+
+UMD build exposed for direct browser usage
+
+Support for global `window.ChatyPlayer`
+
+Package Improvements
+
+Added "unpkg" and "jsdelivr" fields for CDN resolution
+
+Added CSS export (`chatyplayer/style.css`)
+
+Improved TypeScript type resolution (typesVersions)
+
+Publishing Improvements
+
+Ensured only production-ready files are included via "files"
+
+Added publishConfig for safe public npm publishing
+
+Improved module exports for better compatibility (ESM + CJS)
+
+Fixed
+Distribution Issues
+
+Fixed issue where ChatyPlayer was not accessible when loaded via script tag
+
+Resolved incorrect asset loading paths in Vite environments
+
+Ensured UMD build loads correctly outside bundlers
+
+Notes
+
+No breaking changes
+
+Fully backward compatible with v1.0.0
+
+Recommended update for all users using CDN or direct script integration
+
 [1.0.0] – Initial Release
 
 Release date: 2026

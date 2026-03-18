@@ -1,6 +1,6 @@
 {
   "name": "chatyplayer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightweight, modular, secure HTML5 video player with modern features.",
   "type": "module",
 
@@ -8,14 +8,22 @@
   "module": "./dist/chatyplayer.es.js",
   "types": "./dist/index.d.ts",
 
+  "unpkg": "./dist/chatyplayer.umd.js",
+  "jsdelivr": "./dist/chatyplayer.umd.js",
+
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/chatyplayer.es.js",
-      "require": "./dist/chatyplayer.cjs.js",
-      "default": "./dist/chatyplayer.es.js"
+      "require": "./dist/chatyplayer.cjs.js"
     },
-    "./styles/*": "./dist/styles/*"
+    "./style.css": "./dist/index.css"
+  },
+
+  "typesVersions": {
+    "*": {
+      "*": ["dist/index.d.ts"]
+    }
   },
 
   "files": [
@@ -51,6 +59,10 @@
 
   "engines": {
     "node": ">=18"
+  },
+
+  "publishConfig": {
+    "access": "public"
   },
 
   "scripts": {
