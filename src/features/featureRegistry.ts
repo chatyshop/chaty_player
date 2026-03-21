@@ -109,9 +109,10 @@ Core features
 ---------------------------------------- */
 
 wrapFeature('fullscreen', initFullscreenFeature),
+wrapFeature('theater', initTheaterFeature),
 wrapFeature('keyboard', initKeyboardFeature),
 wrapFeature('resume', initResumeFeature),
-wrapFeature('theater', initTheaterFeature),
+
 
 /* ----------------------------------------
 Interaction

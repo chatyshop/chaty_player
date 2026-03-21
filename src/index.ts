@@ -129,4 +129,4 @@ function exposeGlobal(): void {
 /* =========================================
    Export (CRITICAL for ES/CJS/UMD)
 ========================================= */
-export { ChatyPlayer };
+export default ChatyPlayer;

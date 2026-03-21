@@ -1,6 +1,7 @@
 /**
  * ChatyPlayer v1.0
  * Theater Mode Feature (Viewport Fill Version)
+ * theater.ts
  * ----------------------------------------
  * - Fills entire browser viewport
  * - No Fullscreen API

@@ -1,6 +1,7 @@
 /**
  * ChatyPlayer v1.0
  * Keyboard Shortcuts Feature (Production Ready)
+ * keyboard.ts
  * ----------------------------------------
  * - Safe key handling
  * - Context-aware activation
