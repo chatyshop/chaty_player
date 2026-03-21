@@ -249,7 +249,6 @@ Available events include:
 | Arrow Down  | Volume down   |
 | M           | Mute          |
 | F           | Fullscreen    |
-| T           | Theater mode  |
 
 ---
 
