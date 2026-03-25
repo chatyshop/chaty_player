@@ -1,7 +1,6 @@
 /* =========================================================
    ChatyPlayer v1.0
-   Controls Styles
-   controls.css
+   Controls Styles (Production Ready - Responsive Fixed)
    ========================================================= */
 
 /* Controls Container */
@@ -11,9 +10,15 @@
   gap: 12px;
   padding: 8px 14px;
   background: transparent;
-  height: 50px;
+
+  min-height: 50px;   /* ✅ flexible height */
+  height: auto;
+
   box-sizing: border-box;
-  flex-wrap: nowrap;
+  width: 100%;
+
+  flex-wrap: nowrap;  /* ✅ prevent broken wrapping */
+  overflow: hidden;   /* ✅ avoid overflow bugs */
 }
 
 /* Left / Right Groups */
@@ -22,11 +27,14 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  white-space: nowrap;
+
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .chatyplayer-controls-right {
   margin-left: auto;
+  position: relative;
 }
 
 /* Button Base */
@@ -39,48 +47,53 @@
   font-size: 14px;
   padding: 6px;
   border-radius: 4px;
+
   transition: background 0.2s ease, transform 0.15s ease;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  flex-shrink: 0; /* ✅ prevent collapsing */
 }
 
-/* Hover State */
+/* Hover */
 .chatyplayer-btn:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* Active Click Feedback */
+/* Active */
 .chatyplayer-btn:active {
   transform: scale(0.95);
 }
 
-/* Focus Accessibility */
+/* Focus */
 .chatyplayer-btn:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
-/* Play Button */
+/* Buttons */
 .chatyplayer-play {
   font-size: 16px;
 }
 
-/* Fullscreen Button */
 .chatyplayer-fullscreen {
   font-size: 14px;
 }
 
-/* Volume Section */
+/* Volume */
 .chatyplayer-volume {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 1;
 }
 
 /* Volume Slider */
 .chatyplayer-volume-slider {
   width: 90px;
+  max-width: 90px;
   height: 4px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
@@ -108,10 +121,8 @@
 }
 
 /* =========================================================
-   Subtitles (CC Button + Modern Vertical Menu)
+   Subtitles
 ========================================================= */
-
-/* CC button */
 
 .chatyplayer-subtitles {
   font-size: 12px;
@@ -119,38 +130,32 @@
   letter-spacing: 0.4px;
 }
 
-/* Required for positioning */
-
-.chatyplayer-controls-right {
-  position: relative;
-}
-
-/* Subtitle Menu Container */
-
+/* Subtitle Menu */
 .chatyplayer-subtitle-menu {
   position: absolute;
   bottom: 60px;
   right: 10px;
-  width: 220px;
+
+  width: min(220px, 90vw); /* ✅ safe responsive */
   max-height: 260px;
+
   background: rgba(20, 20, 20, 0.95);
   border-radius: 10px;
+
   overflow-y: auto;
   z-index: 9999;
+
   padding: 6px 0;
   backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-/* List container */
-
+/* List */
 .chaty-subtitle-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-
-/* List items */
 
 .chaty-subtitle-list li {
   padding: 10px 16px;
@@ -161,21 +166,16 @@
   user-select: none;
 }
 
-/* Hover */
-
 .chaty-subtitle-list li:hover {
   background: rgba(255, 255, 255, 0.12);
 }
-
-/* Active language */
 
 .chaty-subtitle-list li.active {
   color: #3ea6ff;
   font-weight: 500;
 }
 
-/* Scrollbar (optional polish) */
-
+/* Scrollbar */
 .chatyplayer-subtitle-menu::-webkit-scrollbar {
   width: 6px;
 }
@@ -185,92 +185,91 @@
   border-radius: 3px;
 }
 
-/* Responsive */
+/* =========================================================
+   MOBILE OPTIMIZATION (KEY FIX)
+========================================================= */
 
 @media (max-width: 600px) {
-  .chatyplayer-volume-slider {
-    width: 60px;
-  }
 
   .chatyplayer-controls {
+    gap: 6px;
     padding: 6px 10px;
+  }
+
+  .chatyplayer-btn {
+    font-size: 12px;
+    padding: 4px;
+  }
+
+  /* ✅ hide heavy UI */
+  .chatyplayer-volume-slider {
+    display: none;
+  }
+
+  /* optional (recommended) */
+  .chatyplayer-settings {
+    display: none;
+  }
+
+  .chatyplayer-subtitles {
+    font-size: 11px;
   }
 
   .chatyplayer-subtitle-menu {
     right: 5px;
-    width: 180px;
+    width: min(180px, 90vw);
   }
 }
 
-/* =========================================
-   Mini Player Subtitle Menu Fix (FINAL)
-========================================= */
+/* Ultra small screens */
+@media (max-width: 400px) {
 
-.chatyplayer-mini .chatyplayer-subtitle-menu {
-  width: 160px;          /* smaller width */
-  max-height: 140px;     /* compact height */
-  right: 6px;            /* keep inside mini player */
-  bottom: 48px;          /* adjust above controls */
-  border-radius: 8px;
-  overflow-y: auto;
+  .chatyplayer-controls {
+    gap: 4px;
+  }
+
+  .chatyplayer-volume {
+    display: none; /* full hide */
+  }
 }
 
-/* Smaller text for compact UI */
-.chatyplayer-mini .chaty-subtitle-list li {
-  font-size: 12px;
-  padding: 8px 10px;
-}
+/* =========================================================
+   MINI PLAYER (SAFE + RESPONSIVE)
+========================================================= */
 
-/* Prevent menu overflow outside video */
 .chatyplayer-mini {
   overflow: hidden;
 }
 
-/* Optional: auto-fit width */
-.chatyplayer-subtitle-menu {
-  width: min(220px, 90vw);
-}
-
-/* =========================================================
-   Mini Player UI (Final Production)
-========================================================= */
-
-/* Controls container (compact) */
 .chatyplayer-mini .chatyplayer-controls {
-  height: 40px;
+  min-height: 40px;
   padding: 6px 8px;
   gap: 8px;
 }
 
-/* Left & right groups tighter */
 .chatyplayer-mini .chatyplayer-controls-left,
 .chatyplayer-mini .chatyplayer-controls-right {
   gap: 6px;
 }
 
-/* Buttons smaller */
 .chatyplayer-mini .chatyplayer-btn {
   font-size: 12px;
   padding: 4px;
 }
 
-/* Play button slightly larger for usability */
 .chatyplayer-mini .chatyplayer-play {
   font-size: 14px;
 }
 
-/* Volume slider smaller */
 .chatyplayer-mini .chatyplayer-volume-slider {
   width: 60px;
   height: 3px;
 }
 
-/* Timeline thinner */
 .chatyplayer-mini .chatyplayer-timeline-layer {
   height: 4px;
 }
 
-/* Subtitle menu smaller */
 .chatyplayer-mini .chatyplayer-subtitle-menu {
   width: 160px;
   max-height: 140px;
@@ -279,18 +278,15 @@
   border-radius: 8px;
 }
 
-/* Subtitle list compact */
 .chatyplayer-mini .chaty-subtitle-list li {
   font-size: 12px;
   padding: 8px 10px;
 }
 
-/* OPTIONAL: hide less important controls in mini mode */
 .chatyplayer-mini .chatyplayer-settings {
   display: none;
 }
 
-/* OPTIONAL: reduce icon spacing */
 .chatyplayer-mini .chatyplayer-controls svg {
   transform: scale(0.9);
 }

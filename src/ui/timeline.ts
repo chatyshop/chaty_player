@@ -1,6 +1,6 @@
 /**
  * ChatyPlayer v1.0
- * Timeline Module (Production Ready - Final Stable)
+ * Timeline Module (Production Ready - Final Stable - FIXED)
  */
 
 import type { Player } from '../core/Player';
@@ -96,7 +96,9 @@ export function createTimeline(
 
       bufferBar.style.width = `${percent}%`;
 
-    } catch {}
+    } catch {
+      // safe ignore
+    }
   };
 
   /* ================= SEEK ================= */
@@ -147,8 +149,10 @@ export function createTimeline(
       1
     );
 
-    const duration = video.duration || 0;
-    if (duration <= 0) return;
+    const duration = video.duration;
+
+    // 🔥 FIX: safe duration check
+    if (!Number.isFinite(duration) || duration <= 0) return;
 
     const previewTime = percent * duration;
 
@@ -162,6 +166,9 @@ export function createTimeline(
 
   const onPointerLeave = () => {
     updateTooltip(null);
+
+    // 🔥 FIX: hide thumbnail properly
+    updateThumbnail?.(NaN, 0);
   };
 
   progressWrapper.addEventListener('pointermove', onPointerMove, { passive: true });
@@ -182,6 +189,9 @@ export function createTimeline(
   const onLoadedMetadata = () => {
     updateProgress();
     updateBuffer();
+
+    // 🔥 FIX: initialize thumbnail engine
+    updateThumbnail?.(0, 0);
   };
 
   const onTimeUpdate = updateProgress;

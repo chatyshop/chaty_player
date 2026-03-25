@@ -329,6 +329,49 @@ function parseChapters(dataset: DOMStringMap): Chapter[] | undefined {
 
 }
 
+
+/* =========================================
+   Subtitle Parser
+========================================= */
+
+function parseSubtitles(dataset: DOMStringMap): SubtitleTrack[] | undefined {
+  if (!dataset.subtitles) return undefined
+
+  try {
+    const raw = JSON.parse(dataset.subtitles)
+    if (!Array.isArray(raw)) return undefined
+
+    const tracks = raw
+      .map((item: any): SubtitleTrack | null => {
+        const src = sanitizeURL(item?.src)
+        if (!src) return null
+
+        const label =
+          typeof item?.label === 'string' ? item.label : ''
+
+        const srclang =
+          typeof item?.srclang === 'string' ? item.srclang : ''
+
+        if (!label || !srclang) return null
+
+        return {
+          src,
+          label,
+          srclang,
+          default: Boolean(item?.default)
+        }
+      })
+      // 🔥 Type-safe filter (fixes your error)
+      .filter((item): item is SubtitleTrack => item !== null)
+
+    return tracks.length ? tracks : undefined
+
+  } catch {
+    console.warn('[ChatyPlayer] Invalid subtitles config')
+    return undefined
+  }
+}
+
 /* =========================================
    Parse Config From Dataset
 ========================================= */
@@ -344,6 +387,7 @@ export function parseConfig(container: HTMLElement): PlayerConfig {
   const dataset = Object.assign({}, container.dataset)
 
   const thumbnails = parseThumbnails(dataset)
+  const subtitles = parseSubtitles(dataset)
   const sources = parseSources(dataset)
   const chapters = parseChapters(dataset)
 
@@ -357,7 +401,7 @@ export function parseConfig(container: HTMLElement): PlayerConfig {
     ogg: sanitizeURL(dataset.ogg),
 
     sources,
-
+    subtitles,
     poster: sanitizeURL(dataset.poster),
 
     autoplay: parseBoolean(dataset.autoplay),

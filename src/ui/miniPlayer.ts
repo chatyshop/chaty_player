@@ -1,6 +1,6 @@
 /**
  * ChatyPlayer v1.0
- * Mini Player (Production Ready - Controlled UX + Mode Safe)
+ * Mini Player (Final Production - Stable + No Flicker + UX Safe)
  */
 
 import type { Player } from '../core/Player'
@@ -20,8 +20,15 @@ export function createMiniPlayer(
   }
 
   let isMini = false
-  let scrollLock = false
   let lastMode: any = 'normal'
+
+  let manualExit = false
+  let manualCooldown = false
+  let cooldownTimer: number | null = null
+
+  let observerLock = false
+  let visibilityTimeout: number | null = null
+  let clickCooldown: number | null = null
 
   /* ---------------------------
      Sentinel
@@ -55,12 +62,23 @@ export function createMiniPlayer(
   backBtn.addEventListener('click', (e) => {
     e.stopPropagation()
 
+    manualExit = true
+    manualCooldown = true
+
+    if (cooldownTimer) clearTimeout(cooldownTimer)
+
     deactivateMini()
 
     container.scrollIntoView({
       behavior: 'smooth',
       block: 'center'
     })
+
+    cooldownTimer = window.setTimeout(() => {
+      manualExit = false
+      manualCooldown = false
+      cooldownTimer = null
+    }, 1000)
   })
 
   /* ---------------------------
@@ -78,7 +96,6 @@ export function createMiniPlayer(
     container.style.zIndex = '9999'
 
     container.appendChild(backBtn)
-
     snapToCorner()
 
     isMini = true
@@ -122,25 +139,38 @@ export function createMiniPlayer(
     (entries) => {
       for (const entry of entries) {
 
-        if (scrollLock) return
+        if (observerLock) return
 
-        if (!entry.isIntersecting && !isMini) {
-          scrollLock = true
-          activateMini()
-          setTimeout(() => (scrollLock = false), 150)
+        const isVisible = entry.isIntersecting
+
+        if (visibilityTimeout) {
+          clearTimeout(visibilityTimeout)
+          visibilityTimeout = null
         }
 
-        if (entry.isIntersecting && isMini) {
-          scrollLock = true
-          deactivateMini()
-          setTimeout(() => (scrollLock = false), 150)
+        if (!isVisible && !isMini && !manualExit && !manualCooldown) {
+          observerLock = true
+
+          visibilityTimeout = window.setTimeout(() => {
+            activateMini()
+            observerLock = false
+          }, 120)
+        }
+
+        if (isVisible && isMini) {
+          observerLock = true
+
+          visibilityTimeout = window.setTimeout(() => {
+            deactivateMini()
+            observerLock = false
+          }, 120)
         }
       }
     },
     {
       root: null,
-      rootMargin: '0px 0px -100px 0px',
-      threshold: 0.3
+      rootMargin: '0px 0px -40px 0px',
+      threshold: 0.05
     }
   )
 
@@ -204,6 +234,32 @@ export function createMiniPlayer(
   }
 
   /* ---------------------------
+     Click (Desktop Return Fix)
+  --------------------------- */
+
+  const onClick = () => {
+    if (!isMini) return
+    if (dragging) return
+    if (clickCooldown) return
+
+    manualExit = true
+    manualCooldown = true
+
+    deactivateMini()
+
+    container.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+
+    clickCooldown = window.setTimeout(() => {
+      manualExit = false
+      manualCooldown = false
+      clickCooldown = null
+    }, 800)
+  }
+
+  /* ---------------------------
      Snap
   --------------------------- */
 
@@ -234,7 +290,7 @@ export function createMiniPlayer(
   }
 
   /* ---------------------------
-     Resize Safety
+     Resize
   --------------------------- */
 
   const onResize = () => {
@@ -246,6 +302,8 @@ export function createMiniPlayer(
   --------------------------- */
 
   container.addEventListener('pointerdown', onPointerDown)
+  container.addEventListener('click', onClick)
+
   window.addEventListener('pointermove', onPointerMove, { passive: true })
   window.addEventListener('pointerup', onPointerUp)
   window.addEventListener('pointercancel', onPointerUp)
@@ -259,7 +317,13 @@ export function createMiniPlayer(
     observer.disconnect()
     sentinel.remove()
 
+    if (visibilityTimeout) clearTimeout(visibilityTimeout)
+    if (cooldownTimer) clearTimeout(cooldownTimer)
+    if (clickCooldown) clearTimeout(clickCooldown)
+
     container.removeEventListener('pointerdown', onPointerDown)
+    container.removeEventListener('click', onClick)
+
     window.removeEventListener('pointermove', onPointerMove)
     window.removeEventListener('pointerup', onPointerUp)
     window.removeEventListener('pointercancel', onPointerUp)

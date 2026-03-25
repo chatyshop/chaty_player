@@ -1,7 +1,7 @@
 /**
  * ChatyPlayer v1.0
  * thumbnail.ts
- * Timeline Thumbnail Renderer (Production Ready - Final Stable)
+ * Timeline Thumbnail Renderer (Production Ready - Final)
  */
 
 import type { Player } from '../core/Player';
@@ -14,7 +14,8 @@ export type ThumbnailUpdater = (
 
 export function createThumbnail(
   player: Player,
-  container: HTMLElement
+  container: HTMLElement,
+  lifecycle?: { registerCleanup?: (fn: () => void) => void }
 ): ThumbnailUpdater | null {
 
   const config = player.getConfig();
@@ -32,7 +33,7 @@ export function createThumbnail(
   } = thumbs;
 
   /* ----------------------------------
-     Validation (safe guard)
+     Validation
   ---------------------------------- */
 
   if (
@@ -58,7 +59,8 @@ export function createThumbnail(
 
   let safeSrc: string;
   try {
-    safeSrc = encodeURI(src);
+    const url = new URL(src, window.location.origin);
+    safeSrc = url.toString();
   } catch {
     console.warn('[ChatyPlayer] Invalid thumbnail src');
     return null;
@@ -82,6 +84,7 @@ export function createThumbnail(
   thumb.style.pointerEvents = 'none';
   thumb.style.backgroundImage = `url("${safeSrc}")`;
   thumb.style.backgroundRepeat = 'no-repeat';
+  thumb.style.backgroundSize = `${columns * width}px ${rows * height}px`;
   thumb.style.width = `${width}px`;
   thumb.style.height = `${height}px`;
   thumb.style.display = 'none';
@@ -89,7 +92,7 @@ export function createThumbnail(
   thumb.style.zIndex = '100';
 
   /* ----------------------------------
-     Time Label
+     Label
   ---------------------------------- */
 
   const label = document.createElement('div');
@@ -99,6 +102,19 @@ export function createThumbnail(
   container.appendChild(thumb);
 
   const maxFrames = columns * rows;
+
+  /* ----------------------------------
+     Cached container size (PERF FIX)
+  ---------------------------------- */
+
+  let containerWidth = 0;
+
+  const updateContainerSize = () => {
+    containerWidth = container.getBoundingClientRect().width;
+  };
+
+  updateContainerSize();
+  window.addEventListener('resize', updateContainerSize);
 
   /* ----------------------------------
      Time Formatter
@@ -121,44 +137,43 @@ export function createThumbnail(
 
   const update: ThumbnailUpdater = (time, position) => {
 
-    if (!Number.isFinite(time)) return;
+    /* Hide safely */
+    if (!Number.isFinite(time)) {
+      thumb.style.display = 'none';
+      return;
+    }
 
     if (rafId !== null) cancelAnimationFrame(rafId);
 
     rafId = requestAnimationFrame(() => {
 
-      /* ---------- Frame Calculation ---------- */
-
+      /* Frame */
       const frameIndex = Math.floor(time / interval);
-      const safeIndex = Math.min(frameIndex, maxFrames - 1);
+      const safeIndex = Math.min(
+        Math.max(frameIndex, 0),
+        maxFrames - 1
+      );
 
       const col = safeIndex % columns;
       const row = Math.floor(safeIndex / columns);
 
-      const x = -(col * width);
-      const y = -(row * height);
+      const bgX = -(col * width);
+      const bgY = -(row * height);
 
-      thumb.style.backgroundPosition = `${x}px ${y}px`;
+      thumb.style.backgroundPosition = `${bgX}px ${bgY}px`;
 
-      /* ---------- Position Clamp ---------- */
-
-      const containerWidth = container.getBoundingClientRect().width;
-
+      /* Position */
       const safeLeft = Math.max(
         width / 2,
         Math.min(position, containerWidth - width / 2)
       ) - width / 2;
 
-      /* ---------- Position (Above Timeline) ---------- */
-
       thumb.style.transform = `translate(${safeLeft}px, -${height + 12}px)`;
 
-      /* ---------- Label ---------- */
-
+      /* Label */
       label.textContent = formatTime(time);
 
-      /* ---------- Show ---------- */
-
+      /* Show */
       if (thumb.style.display !== 'block') {
         thumb.style.display = 'block';
       }
@@ -178,10 +193,20 @@ export function createThumbnail(
   container.addEventListener('touchcancel', hide);
 
   /* ----------------------------------
-     Cleanup Safety (optional future)
+     Cleanup (IMPORTANT)
   ---------------------------------- */
 
-  // (You can later attach lifecycle cleanup here if needed)
+  lifecycle?.registerCleanup?.(() => {
+    if (rafId) cancelAnimationFrame(rafId);
+
+    container.removeEventListener('mouseleave', hide);
+    container.removeEventListener('touchend', hide);
+    container.removeEventListener('touchcancel', hide);
+
+    window.removeEventListener('resize', updateContainerSize);
+
+    thumb.remove();
+  });
 
   return update;
 }

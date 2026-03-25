@@ -262,40 +262,50 @@ export function initSubtitlesFeature(
 
   subtitleLayer.style.bottom = `${offset}px`
 }
+/* ========================================= */
 
-  /* ========================================= */
+const enableSubtitle = async (srclang: string) => {
+  if (!srclang || destroyed) return
 
-  const enableSubtitle = async (srclang: string) => {
-    if (!srclang) return
+  const track = tracks.find(t => t.srclang === srclang)
+  if (!track) return
 
-    activeLang = srclang
-    await loadSubtitles(srclang)
+  activeLang = srclang
 
-    state?.set?.('subtitle', srclang)
-    events?.emit('subtitlechange', srclang)
-  }
+  // ✅ Update state FIRST (UI reacts immediately)
+  state?.set?.('subtitle', srclang)
+  events?.emit('subtitlechange', srclang)
 
-  const disableSubtitles = () => {
-    activeLang = null
-    subtitleText.innerHTML = ''
+  // ✅ Load subtitles safely
+  await loadSubtitles(srclang)
 
-    state?.set?.('subtitle', null)
-    events?.emit('subtitlechange', null)
-  }
-
-  const getAvailableSubtitles = (): string[] => {
-    return tracks.map(t => t.srclang).filter(Boolean)
-  }
-
-  /* 🔥 CRITICAL: expose to player */
-  ;(player as any).api = {
-  ...(player as any).api,
-
-  enableSubtitle,
-  disableSubtitles,
-  getAvailableSubtitles,
-  getCurrentSubtitle
+  // ✅ Force render after async load
+  updateSubtitles()
 }
+
+const disableSubtitles = () => {
+  if (destroyed) return
+
+  activeLang = null
+  currentIndex = -1
+  subtitleText.innerHTML = ''
+
+  state?.set?.('subtitle', null)
+  events?.emit('subtitlechange', null)
+}
+
+const getAvailableSubtitles = (): string[] => {
+  return tracks.map(t => t.srclang).filter(Boolean)
+}
+
+/* =========================================
+   🔥 PRODUCTION SAFE: Attach to Player (NOT api)
+========================================= */
+
+;(player as any).enableSubtitle = enableSubtitle
+;(player as any).disableSubtitles = disableSubtitles
+;(player as any).getAvailableSubtitles = getAvailableSubtitles
+;(player as any).getCurrentSubtitle = getCurrentSubtitle
 
   /* ========================================= */
 

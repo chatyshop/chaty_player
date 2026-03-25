@@ -173,7 +173,7 @@ subtitleMenu.style.display = 'none'
    Subtitles API (NEW SYSTEM)
 ========================================= */
 
-const getAPI = () => player.api
+const getAPI = () => player as any
 
 /* =========================================
    Build Menu (SAFE + CUSTOM ENGINE)
