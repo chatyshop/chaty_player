@@ -4,6 +4,36 @@ All notable changes to ChatyPlayer will be documented in this file.
 
 The format is based on Keep a Changelog and follows Semantic Versioning.
 
+
+## [1.0.5] – Stability & Demo Improvements
+
+Release date: 25 Mar 2026
+
+This release focuses on stability improvements, UI refinements, and better developer experience.
+
+### 🛠 Fixed
+
+* Fixed edge cases in subtitle positioning during rapid UI state changes
+* Fixed thumbnail preview jitter and alignment inconsistencies
+* Fixed minor UI sync issues when toggling menus and controls
+* Improved handling of hover interactions on timeline
+
+### 🎨 Improvements
+
+* Improved thumbnail preview smoothness using optimized transforms
+* Enhanced UI responsiveness across normal, theater, and fullscreen modes
+* Minor visual refinements for controls and overlays
+* Better consistency in subtitle rendering across different player states
+
+### 🚀 Developer Experience
+
+* Improved internal architecture for UI modules
+* Cleaner separation between controls, timeline, and subtitle layers
+* More stable event handling across features
+
+
+---
+
 ## [1.0.4] – Subtitles & Thumbnail System Upgrade
 
 Release date: 23 Mar 2026
