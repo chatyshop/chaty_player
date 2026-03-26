@@ -10,18 +10,25 @@
  */
 
 import type { Player } from '../core/Player'
+import type { EventEmitter } from '../core/events'
 import type { LifecycleManager } from '../core/lifecycle'
 import type { StateManager } from '../core/state'
 
 export function initFullscreenFeature(
   player: Player,
   lifecycle?: LifecycleManager,
-  state?: StateManager
+  state?: StateManager,
+  events?: EventEmitter
 ) {
   const container = player.getContainer()
   const doc: any = document
 
   let syncing = false
+
+  const syncFullscreenState = (active: boolean) => {
+    state?.set('fullscreen', active)
+    events?.emit('fullscreenchange', active)
+  }
 
   /* =========================================
      Fullscreen helpers (safe)
@@ -59,9 +66,33 @@ export function initFullscreenFeature(
     if (prev === next) return
 
     if (next === 'fullscreen') {
-      if (!isFullscreen()) requestFullscreen()
+      if (!isFullscreen()) {
+        Promise.resolve(requestFullscreen()).catch(() => {
+          if (isFullscreen() || player.getMode() !== 'fullscreen') return
+
+          syncing = true
+          try {
+            player.setMode(prev === 'fullscreen' ? 'normal' : prev)
+            syncFullscreenState(false)
+          } finally {
+            syncing = false
+          }
+        })
+      }
     } else {
-      if (isFullscreen()) exitFullscreen()
+      if (isFullscreen()) {
+        Promise.resolve(exitFullscreen()).catch(() => {
+          if (!isFullscreen() || player.getMode() === 'fullscreen') return
+
+          syncing = true
+          try {
+            player.setMode('fullscreen')
+            syncFullscreenState(true)
+          } finally {
+            syncing = false
+          }
+        })
+      }
     }
   })
 
@@ -75,7 +106,7 @@ export function initFullscreenFeature(
 
     try {
       const active = isFullscreen()
-      state?.set('fullscreen', active)
+      syncFullscreenState(active)
 
       if (active && player.getMode() !== 'fullscreen') {
         player.setMode('fullscreen')

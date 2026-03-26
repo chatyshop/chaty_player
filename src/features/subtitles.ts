@@ -182,6 +182,7 @@ export function initSubtitlesFeature(
   let activeLang: string | null = null
   let currentIndex = -1
   let destroyed = false
+  let loadRequestId = 0
 
   const getCurrentSubtitle = (): string | null => {
   return activeLang
@@ -189,12 +190,14 @@ export function initSubtitlesFeature(
 
   /* ========================================= */
 
-  const loadSubtitles = async (lang: string) => {
+  const loadSubtitles = async (lang: string): Promise<boolean> => {
     const track = tracks.find(t => t.srclang === lang)
-    if (!track) return
+    if (!track) return false
 
     const safeURL = sanitizeURL(track.src)
-    if (!safeURL) return
+    if (!safeURL) return false
+
+    const requestId = ++loadRequestId
 
     try {
       const res = await fetch(safeURL, { credentials: 'same-origin' })
@@ -202,10 +205,16 @@ export function initSubtitlesFeature(
 
       const text = await res.text()
 
+       if (destroyed || requestId !== loadRequestId || activeLang !== lang) {
+        return false
+      }
+
       cues = parseVTT(text)
       currentIndex = -1
+      return true
     } catch (err) {
       console.warn('[ChatyPlayer] Failed to load subtitles', err)
+      return false
     }
   }
 
@@ -278,6 +287,10 @@ const enableSubtitle = async (srclang: string) => {
   const track = tracks.find(t => t.srclang === srclang)
   if (!track) return
 
+  const previousLang = activeLang
+  const previousCues = cues
+  const previousIndex = currentIndex
+
   activeLang = srclang
 
   // ✅ Update state FIRST (UI reacts immediately)
@@ -285,7 +298,19 @@ const enableSubtitle = async (srclang: string) => {
   events?.emit('subtitlechange', srclang)
 
   // ✅ Load subtitles safely
-  await loadSubtitles(srclang)
+  const loaded = await loadSubtitles(srclang)
+
+  if (!loaded && activeLang === srclang) {
+    activeLang = previousLang
+    cues = previousCues
+    currentIndex = previousIndex
+    subtitleText.innerHTML = ''
+
+    state?.set?.('subtitle', previousLang)
+    events?.emit('subtitlechange', previousLang)
+    updateSubtitles()
+    return
+  }
 
   // ✅ Force render after async load
   updateSubtitles()
@@ -344,6 +369,7 @@ const getAvailableSubtitles = (): string[] => {
   lifecycle?.registerCleanup(() => {
     destroyed = true
 
+    container.removeEventListener('chatyplayer-ui-update', updatePosition)
     video.removeEventListener('timeupdate', updateSubtitles)
     video.removeEventListener('timeupdate', updatePosition)
 

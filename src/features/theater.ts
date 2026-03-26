@@ -10,13 +10,15 @@
  */
 
 import type { Player } from '../core/Player'
+import type { EventEmitter } from '../core/events'
 import type { LifecycleManager } from '../core/lifecycle'
 import type { StateManager } from '../core/state'
 
 export function initTheaterFeature(
   player: Player,
   lifecycle?: LifecycleManager,
-  state?: StateManager
+  state?: StateManager,
+  events?: EventEmitter
 ) {
   const container = player.getContainer()
   const wrapper = container.querySelector(
@@ -29,6 +31,7 @@ export function initTheaterFeature(
   const styleBackup = new WeakMap<HTMLElement, Partial<CSSStyleDeclaration>>()
 
   let active = false
+  let bodyOverflowBackup: string | null = null
 
   /* ========================================= */
 
@@ -80,9 +83,13 @@ export function initTheaterFeature(
       wrapper.style.height = '100%'
     }
 
+    if (bodyOverflowBackup === null) {
+      bodyOverflowBackup = document.body.style.overflow
+    }
     document.body.style.overflow = 'hidden'
 
     state?.set('theater', true)
+    events?.emit('theatre', true)
   }
 
   const disableTheatre = () => {
@@ -94,9 +101,11 @@ export function initTheaterFeature(
     restoreStyles(container)
     if (wrapper) restoreStyles(wrapper)
 
-    document.body.style.overflow = ''
+    document.body.style.overflow = bodyOverflowBackup ?? ''
+    bodyOverflowBackup = null
 
     state?.set('theater', false)
+    events?.emit('theatre', false)
   }
 
   /* =========================================

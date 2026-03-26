@@ -22,7 +22,7 @@ function parseTimeString(value: string): number | null {
   }
 
   // YouTube style (1m30s, 2h1m5s)
-  const regex = /(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/;
+  const regex = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/;
   const match = value.match(regex);
 
   if (!match) return null;
@@ -33,6 +33,8 @@ function parseTimeString(value: string): number | null {
 
   const total = hours * 3600 + minutes * 60 + seconds;
 
+  if (!match[1] && !match[2] && !match[3]) return null;
+
   return isFinite(total) && total >= 0 ? total : null;
 }
 
@@ -41,6 +43,7 @@ export function initTimestampFeature(
   lifecycle?: LifecycleManager
 ) {
   const video = player.getVideo();
+  let appliedTimestamp = false;
 
   /**
    * Extract timestamp from URL
@@ -64,13 +67,16 @@ export function initTimestampFeature(
    * Seek on metadata load
    */
   const applyTimestamp = () => {
+    if (appliedTimestamp) return;
+
     const timestamp = getTimestampFromURL();
     if (timestamp === null) return;
 
     if (!video.duration) return;
 
     const safeTime = Math.min(timestamp, video.duration - 1);
-    video.currentTime = safeTime;
+    player.seek(safeTime);
+    appliedTimestamp = true;
   };
 
   /**
@@ -83,6 +89,9 @@ export function initTimestampFeature(
     const url = new URL(window.location.href);
 
     url.searchParams.set('t', String(currentTime));
+    if (url.hash.includes('t=')) {
+      url.hash = '';
+    }
 
     return url.toString();
   };

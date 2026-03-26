@@ -53,7 +53,10 @@ export function initPiPFeature(
     return (
       'pictureInPictureEnabled' in document &&
       (document as any).pictureInPictureEnabled === true &&
-      typeof video.requestPictureInPicture === 'function'
+      typeof video.requestPictureInPicture === 'function' &&
+      !(video as HTMLVideoElement & {
+        disablePictureInPicture?: boolean
+      }).disablePictureInPicture
     )
 
   }
@@ -170,8 +173,8 @@ export function initPiPFeature(
 
         try {
 
-          autoPiPTriggered = true
           await enterPiP()
+          autoPiPTriggered = isActive()
 
         } catch {}
 
@@ -225,9 +228,7 @@ export function initPiPFeature(
 
   })
 
-  ;(player as any).togglePiP = () => {
-    void togglePiP()
-  }
+  ;(player as any).togglePiP = () => togglePiP()
 
   /* =========================================
      Public API

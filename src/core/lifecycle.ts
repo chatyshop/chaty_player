@@ -105,18 +105,16 @@ export class LifecycleManager {
         player.pause();
       } catch {}
 
-      // Execute cleanup tasks (non-blocking for UI smoothness)
-      queueMicrotask(() => {
-        this.cleanupTasks.forEach((task) => {
-          try {
-            task();
-          } catch (error) {
-            console.error('[ChatyPlayer] Cleanup error:', error);
-          }
-        });
-
-        this.cleanupTasks.clear();
+      // Run registered cleanups before tearing down shared systems.
+      this.cleanupTasks.forEach((task) => {
+        try {
+          task();
+        } catch (error) {
+          console.error('[ChatyPlayer] Cleanup error:', error);
+        }
       });
+
+      this.cleanupTasks.clear();
 
       // Clear state listeners
       if (state) {

@@ -1,11 +1,7 @@
 /**
- * ChatyPlayer v1.0
- * Video Format Detection Utility
- * ----------------------------------------
- * - Safe source validation
- * - Detects supported formats
- * - Prevents unsafe URL injection
- * - Uses native canPlayType
+ * Direct-source format selection helper.
+ * Used by the core player to choose the best playable source
+ * from the simple mp4/webm/ogg config fields.
  */
 
 export type VideoFormat = 'mp4' | 'webm' | 'ogg';
@@ -16,9 +12,6 @@ export interface VideoSources {
   ogg?: string;
 }
 
-/**
- * Allowed protocols
- */
 const ALLOWED_PROTOCOLS = ['http:', 'https:', 'blob:', ''];
 
 function isValidURL(url: string): boolean {
@@ -120,27 +113,3 @@ export function selectBestSource(
   return null;
 }
 
-/**
- * Validate and sanitize sources object
- */
-export function sanitizeSources(
-  sources: unknown
-): VideoSources {
-  if (!sources || typeof sources !== 'object') {
-    return {};
-  }
-
-  const safe: VideoSources = {};
-
-  const input = sources as Record<string, unknown>;
-
-  (['mp4', 'webm', 'ogg'] as VideoFormat[]).forEach((format) => {
-    const value = input[format];
-
-    if (typeof value === 'string' && isValidURL(value)) {
-      safe[format] = value;
-    }
-  });
-
-  return safe;
-}

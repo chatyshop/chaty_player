@@ -12,6 +12,7 @@
 import type { Player } from '../core/Player';
 import type { LifecycleManager } from '../core/lifecycle';
 import type { StateManager } from '../core/state';
+import { getItem, removeItem, setItem } from '../utils/storage';
 
 const SAVE_INTERVAL = 5000; // 5 seconds
 const MIN_DURATION = 30; // seconds
@@ -25,13 +26,24 @@ export function initResumeFeature(
   const video = player.getVideo();
 
   let saveTimer: number | null = null;
+  let restoredKey: string | null = null;
+
+  const createSourceToken = (src: string): string => {
+    let hash = 0;
+
+    for (let i = 0; i < src.length; i += 1) {
+      hash = (hash * 31 + src.charCodeAt(i)) >>> 0;
+    }
+
+    return hash.toString(36);
+  };
 
   /**
    * Create safe storage key
    */
   const getStorageKey = (): string => {
     const src = video.currentSrc || video.src || 'unknown';
-    return `chatyplayer_resume_${btoa(src).slice(0, 50)}`;
+    return `resume:${createSourceToken(src)}`;
   };
 
   /**
@@ -39,13 +51,16 @@ export function initResumeFeature(
    */
   const savePosition = () => {
     if (!video.duration || video.duration < MIN_DURATION) return;
+    if (!Number.isFinite(video.currentTime) || video.currentTime <= 0) return;
 
-    try {
-      const key = getStorageKey();
-      localStorage.setItem(key, String(video.currentTime));
-    } catch {
-      // Fail silently (private mode, quota exceeded)
+    const key = getStorageKey();
+
+    if (video.currentTime >= video.duration - END_THRESHOLD) {
+      removeItem(key);
+      return;
     }
+
+    setItem(key, video.currentTime);
   };
 
   /**
@@ -54,20 +69,17 @@ export function initResumeFeature(
   const restorePosition = () => {
     if (!video.duration || video.duration < MIN_DURATION) return;
 
-    try {
-      const key = getStorageKey();
-      const stored = localStorage.getItem(key);
-      if (!stored) return;
+    const key = getStorageKey();
+    if (restoredKey === key) return;
 
-      const time = parseFloat(stored);
-      if (!isFinite(time)) return;
+    const stored = getItem<number>(key);
+    if (typeof stored !== 'number' || !Number.isFinite(stored)) return;
 
-      if (time < video.duration - END_THRESHOLD) {
-        video.currentTime = time;
-        state?.set('currentTime', time);
-      }
-    } catch {
-      // Fail silently
+    restoredKey = key;
+
+    if (stored > 0 && stored < video.duration - END_THRESHOLD) {
+      video.currentTime = stored;
+      state?.set('currentTime', stored);
     }
   };
 
@@ -99,13 +111,14 @@ export function initResumeFeature(
   const onPause = () => savePosition();
   const onEnded = () => {
     stopSaving();
-    try {
-      const key = getStorageKey();
-      localStorage.removeItem(key);
-    } catch {}
+    removeItem(getStorageKey());
   };
 
-  const onLoadedMetadata = () => restorePosition();
+  const onLoadedMetadata = () => {
+    if (restoredKey !== getStorageKey()) {
+      restorePosition();
+    }
+  };
 
   video.addEventListener('play', onPlay);
   video.addEventListener('pause', onPause);

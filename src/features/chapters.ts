@@ -91,7 +91,6 @@ export function initChaptersFeature(
       segment.setAttribute('role', 'button')
       segment.setAttribute('tabindex', '0')
       segment.setAttribute('aria-label', chapter.title)
-      segment.title = chapter.title // 🔥 tooltip
 
       /* seek */
       const seekToChapter = (): void => {
@@ -137,7 +136,7 @@ export function initChaptersFeature(
     if (!Number.isFinite(current)) return
     if (!validChapters.length) return
 
-    let activeIndex = 0
+    let activeIndex = -1
 
     for (let i = 0; i < validChapters.length; i++) {
       if (current >= validChapters[i]!.time) {
@@ -151,7 +150,7 @@ export function initChaptersFeature(
       const seg = segments[i]
       if (!seg) continue
 
-      if (i === activeIndex) {
+      if (activeIndex >= 0 && i === activeIndex) {
         seg.classList.add('chatyplayer-chapter-active')
       } else {
         seg.classList.remove('chatyplayer-chapter-active')

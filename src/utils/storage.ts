@@ -24,8 +24,9 @@ function isStorageAvailable(): boolean {
   }
 }
 
-const storageEnabled =
-  typeof window !== 'undefined' && isStorageAvailable();
+function canUseStorage(): boolean {
+  return typeof window !== 'undefined' && isStorageAvailable();
+}
 
 /**
  * Build safe namespaced key
@@ -38,7 +39,7 @@ function buildKey(key: string): string {
  * Set value safely (JSON encoded)
  */
 export function setItem<T>(key: string, value: T): boolean {
-  if (!storageEnabled) return false;
+  if (!canUseStorage()) return false;
 
   try {
     const safeKey = buildKey(key);
@@ -54,7 +55,7 @@ export function setItem<T>(key: string, value: T): boolean {
  * Get value safely (JSON decoded)
  */
 export function getItem<T>(key: string): T | null {
-  if (!storageEnabled) return null;
+  if (!canUseStorage()) return null;
 
   try {
     const safeKey = buildKey(key);
@@ -64,10 +65,14 @@ export function getItem<T>(key: string): T | null {
 
     const parsed = JSON.parse(raw);
 
-    // Prevent prototype pollution
+    // Reject objects with custom prototypes or shadowed dangerous keys.
     if (parsed && typeof parsed === 'object') {
-      if ('__proto__' in parsed) return null;
-      if ('constructor' in parsed) return null;
+      const prototype = Object.getPrototypeOf(parsed);
+      if (prototype !== Object.prototype && prototype !== null && !Array.isArray(parsed)) {
+        return null;
+      }
+      if (Object.prototype.hasOwnProperty.call(parsed, '__proto__')) return null;
+      if (Object.prototype.hasOwnProperty.call(parsed, 'constructor')) return null;
     }
 
     return parsed as T;
@@ -80,7 +85,7 @@ export function getItem<T>(key: string): T | null {
  * Remove item safely
  */
 export function removeItem(key: string): boolean {
-  if (!storageEnabled) return false;
+  if (!canUseStorage()) return false;
 
   try {
     const safeKey = buildKey(key);
@@ -95,7 +100,7 @@ export function removeItem(key: string): boolean {
  * Clear only ChatyPlayer keys (not entire localStorage)
  */
 export function clearNamespace(): void {
-  if (!storageEnabled) return;
+  if (!canUseStorage()) return;
 
   try {
     Object.keys(window.localStorage).forEach((key) => {

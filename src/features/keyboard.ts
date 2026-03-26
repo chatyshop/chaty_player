@@ -63,6 +63,17 @@ export function initKeyboardFeature(
     return active === container || isHovered
   }
 
+  const applyVolumeFromKeyboard = (nextVolume: number): void => {
+    const safeVolume = Math.max(0, Math.min(nextVolume, 1))
+    const isMuted = safeVolume === 0
+
+    player.setVolume(safeVolume)
+    video.muted = isMuted ? true : false
+
+    state?.set('volume', safeVolume)
+    state?.set('muted', video.muted)
+  }
+
   /* =========================================
      Keyboard Handler
   ========================================= */
@@ -70,8 +81,7 @@ export function initKeyboardFeature(
   const onKeyDown = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
 
-    // Allow "t" globally (like YouTube), others only when active
-    if (!shouldHandle() && key !== 't') return
+    if (!shouldHandle()) return
 
     /* Prevent repeat spam */
     if (
@@ -105,26 +115,13 @@ export function initKeyboardFeature(
 
       case 'arrowup': {
         e.preventDefault()
-
-        const upVolume = Math.min(1, video.volume + VOLUME_STEP)
-
-        player.setVolume(upVolume)
-        video.muted = false
-
-        state?.set('volume', upVolume)
-        state?.set('muted', false)
+        applyVolumeFromKeyboard(video.volume + VOLUME_STEP)
         break
       }
 
       case 'arrowdown': {
         e.preventDefault()
-
-        const downVolume = Math.max(0, video.volume - VOLUME_STEP)
-
-        player.setVolume(downVolume)
-        video.muted = false
-
-        state?.set('volume', downVolume)
+        applyVolumeFromKeyboard(video.volume - VOLUME_STEP)
         break
       }
 

@@ -11,12 +11,12 @@
   transition: opacity 0.25s ease;
 }
 
-.chatyplayer-root.is-idle .chatyplayer-controls-layer {
+.chatyplayer-root.hide-ui .chatyplayer-controls-layer {
   opacity: 0;
   pointer-events: none;
 }
 
-.chatyplayer-root:not(.is-idle) .chatyplayer-controls-layer {
+.chatyplayer-root:not(.hide-ui) .chatyplayer-controls-layer {
   opacity: 1;
 }
 
@@ -43,21 +43,6 @@
 .chatyplayer-tooltip.is-visible {
   opacity: 1;
   transform: translateY(-14px);
-}
-
-/* ========================================
-   Settings Panel Slide
-   ======================================== */
-
-.chatyplayer-settings-panel {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.chatyplayer-settings-panel.is-open {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* ========================================
@@ -111,7 +96,7 @@
    Chapter Marker Hover
    ======================================== */
 
-.chatyplayer-chapter-marker {
+.chatyplayer-chapter-segment {
   transition: opacity 0.2s ease;
 }
 
@@ -128,7 +113,7 @@
   .chatyplayer-mini,
   .chatyplayer-theater,
   .chatyplayer-progress,
-  .chatyplayer-chapter-marker {
+  .chatyplayer-chapter-segment {
     transition: none !important;
     animation: none !important;
   }

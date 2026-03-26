@@ -76,7 +76,7 @@ export function createControls(
   ===================================================== */
 
   const timeDisplay = document.createElement('span')
-  timeDisplay.className = 'chatyplayer-time-inline'
+  timeDisplay.className = 'chatyplayer-time chatyplayer-time-inline'
 
   const formatTime = (seconds: number): string => {
     if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
@@ -148,8 +148,11 @@ export function createControls(
   volumeSlider.addEventListener('input', changeVolume)
 
   // Prevent gesture conflicts
-  volumeSlider.addEventListener('touchstart', e => e.stopPropagation(), { passive: true })
-  volumeSlider.addEventListener('touchmove', e => e.stopPropagation(), { passive: true })
+  const stopVolumeSliderTouchPropagation = (e: Event): void => {
+    e.stopPropagation()
+  }
+  volumeSlider.addEventListener('touchstart', stopVolumeSliderTouchPropagation, { passive: true })
+  volumeSlider.addEventListener('touchmove', stopVolumeSliderTouchPropagation, { passive: true })
 
   video.addEventListener('volumechange', syncVolumeUI)
 
@@ -241,12 +244,14 @@ const buildSubtitleMenu = (): void => {
   subtitleMenu.appendChild(list)
 }
 
-events?.on('subtitlechange', () => {
+const onSubtitleChange = () => {
   // Only rebuild if menu is open (efficient)
   if (subtitleMenu.style.display === 'block') {
     buildSubtitleMenu()
   }
-})
+}
+
+events?.on('subtitlechange', onSubtitleChange)
 
 /* =========================================
    Toggle Menu
@@ -341,17 +346,7 @@ lifecycle?.registerCleanup(() => {
     player.toggleFullscreen()
   }
 
-  const onFullscreenChange = (): void => {
-    const doc: any = document
-    state?.set?.(
-      'fullscreen',
-      !!(doc.fullscreenElement || doc.webkitFullscreenElement)
-    )
-  }
-
   fullscreenBtn.addEventListener('click', toggleFullscreen)
-  document.addEventListener('fullscreenchange', onFullscreenChange)
-  document.addEventListener('webkitfullscreenchange', onFullscreenChange)
 
   /* =====================================================
   BUILD
@@ -396,12 +391,13 @@ lifecycle?.registerCleanup(() => {
 
     muteBtn.removeEventListener('click', toggleMute)
     volumeSlider.removeEventListener('input', changeVolume)
+    volumeSlider.removeEventListener('touchstart', stopVolumeSliderTouchPropagation)
+    volumeSlider.removeEventListener('touchmove', stopVolumeSliderTouchPropagation)
 
     subtitleBtn.removeEventListener('click', onSubtitleClick)
     document.removeEventListener('pointerdown', onPointerDown)
+    events?.off('subtitlechange', onSubtitleChange)
 
     fullscreenBtn.removeEventListener('click', toggleFullscreen)
-    document.removeEventListener('fullscreenchange', onFullscreenChange)
-    document.removeEventListener('webkitfullscreenchange', onFullscreenChange)
   })
 }

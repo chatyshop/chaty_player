@@ -32,12 +32,7 @@ export function initSpeedFeature(
     if (!isFinite(rate)) return;
 
     const clamped = Math.min(Math.max(rate, MIN_SPEED), MAX_SPEED);
-
-    video.playbackRate = clamped;
-
-    state?.set('speed', clamped);
-
-    events?.emit('speedchange', clamped);
+    player.setSpeed(clamped);
   };
 
   /**
@@ -59,6 +54,7 @@ export function initSpeedFeature(
    */
   const onLoadedMetadata = () => {
     state?.set('speed', video.playbackRate);
+    events?.emit('speedchange', video.playbackRate);
   };
 
   video.addEventListener('loadedmetadata', onLoadedMetadata);

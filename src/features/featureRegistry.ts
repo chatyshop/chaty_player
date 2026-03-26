@@ -13,7 +13,7 @@ import type { Player } from '../core/Player'
 import type { EventEmitter } from '../core/events'
 import type { LifecycleManager } from '../core/lifecycle'
 import type { StateManager } from '../core/state'
-import type { PlayerFeature } from '../types/Feature'
+import type { InternalFeatureContext, PlayerFeature } from '../types/Feature'
 
 import { initFullscreenFeature } from './fullscreen'
 import { initKeyboardFeature } from './keyboard'
@@ -49,12 +49,7 @@ function wrapFeature(
 
     init(player: Player): void {
       if (!player) return
-
-      const featureHost = player as unknown as {
-        lifecycle?: LifecycleManager
-        state?: StateManager
-        events?: EventEmitter
-      }
+      const featureHost = player.getFeatureContext()
 
       try {
         initializer(
@@ -115,9 +110,7 @@ wrapFeature('chapters', (player: Player) => {
 
 try {
 
-  const config = (player as any).config
-  const lifecycle = (player as any).lifecycle
-  const state = (player as any).state
+  const { config, lifecycle, state } = player.getFeatureContext()
 
   const chapters = config?.chapters
 
@@ -125,7 +118,7 @@ try {
 
   const timeline = player
     .getContainer()
-    .querySelector('.chatyplayer-timeline-layer') as HTMLElement | null
+    .querySelector('.chatyplayer-progress-wrapper') as HTMLElement | null
 
   if (!timeline) return
 
@@ -158,10 +151,7 @@ wrapFeature('subtitles', (player: Player) => {
 
 try {
 
-  const config = (player as any).config
-  const lifecycle = (player as any).lifecycle
-  const state = (player as any).state
-  const events = (player as any).events
+  const { config, lifecycle, state, events } = player.getFeatureContext()
 
   const tracks = config?.subtitles
 
@@ -199,10 +189,7 @@ wrapFeature('quality', (player: Player) => {
 
 try {
 
-  const config = (player as any).config
-  const lifecycle = (player as any).lifecycle
-  const state = (player as any).state
-  const events = (player as any).events
+  const { config, lifecycle, state, events } = player.getFeatureContext()
 
   if (!config) return
 

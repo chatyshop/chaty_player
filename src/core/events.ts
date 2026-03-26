@@ -35,7 +35,6 @@ export type PlayerEventMap = {
   speedchange: number;
 
   theatre: boolean;
-  fullscreen: boolean;
 
   // 🔥 NEW: Mode system event (CRITICAL FIX)
   modechange: {

@@ -147,7 +147,10 @@ function parsePreload(value?: string): 'none' | 'metadata' | 'auto' {
    Safe URL Sanitizer
 ========================================= */
 
-function sanitizeURL(url?: string): string | undefined {
+function sanitizeURL(
+  url?: string,
+  allowedProtocols: string[] = ['http:', 'https:', 'blob:']
+): string | undefined {
 
   if (!url) return undefined
 
@@ -159,8 +162,6 @@ function sanitizeURL(url?: string): string | undefined {
         : 'http://localhost'
 
     const parsed = new URL(url, base)
-
-    const allowedProtocols = ['http:', 'https:', 'blob:', 'data:']
 
     if (!allowedProtocols.includes(parsed.protocol)) {
 
@@ -202,7 +203,7 @@ function sanitizeColor(value?: string): string | undefined {
 
 function parseThumbnails(dataset: DOMStringMap): ThumbnailConfig | undefined {
 
-  const src = sanitizeURL(dataset.thumbnails)
+  const src = sanitizeURL(dataset.thumbnails, ['http:', 'https:', 'blob:', 'data:'])
 
   if (!src) return undefined
 
@@ -311,7 +312,7 @@ function parseChapters(dataset: DOMStringMap): Chapter[] | undefined {
           ? item.title
           : ''
 
-      if (time === undefined || !title) continue
+      if (time === undefined || !Number.isFinite(time) || time < 0 || !title) continue
 
       chapters.push({ time, title })
 
@@ -402,7 +403,7 @@ export function parseConfig(container: HTMLElement): PlayerConfig {
 
     sources,
     subtitles,
-    poster: sanitizeURL(dataset.poster),
+    poster: sanitizeURL(dataset.poster, ['http:', 'https:', 'blob:', 'data:']),
 
     autoplay: parseBoolean(dataset.autoplay),
     loop: parseBoolean(dataset.loop),
@@ -425,9 +426,7 @@ export function parseConfig(container: HTMLElement): PlayerConfig {
     !config.ogg &&
     !config.sources
   ) {
-
-    console.warn('[ChatyPlayer] No valid video source provided.')
-
+    throw new Error('[ChatyPlayer] No valid video source provided.')
   }
 
   return config

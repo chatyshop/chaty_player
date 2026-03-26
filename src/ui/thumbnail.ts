@@ -108,9 +108,25 @@ export function createThumbnail(
   ---------------------------------- */
 
   let containerWidth = 0;
+  let displayWidth = width;
+  let displayHeight = height;
 
   const updateContainerSize = () => {
     containerWidth = container.getBoundingClientRect().width;
+
+    const videoWrapper = container.closest('.chatyplayer-video-wrapper') as HTMLElement | null;
+    const wrapperHeight = videoWrapper?.getBoundingClientRect().height ?? height;
+
+    const maxWidth = Math.min(width, Math.max(96, containerWidth - 24), containerWidth * 0.5);
+    const maxHeight = Math.min(height, Math.max(54, wrapperHeight * 0.32));
+    const scale = Math.min(maxWidth / width, maxHeight / height, 1);
+
+    displayWidth = Math.max(96, Math.round(width * scale));
+    displayHeight = Math.max(54, Math.round(height * scale));
+
+    thumb.style.width = `${displayWidth}px`;
+    thumb.style.height = `${displayHeight}px`;
+    thumb.style.backgroundSize = `${columns * displayWidth}px ${rows * displayHeight}px`;
   };
 
   updateContainerSize();
@@ -157,18 +173,18 @@ export function createThumbnail(
       const col = safeIndex % columns;
       const row = Math.floor(safeIndex / columns);
 
-      const bgX = -(col * width);
-      const bgY = -(row * height);
+      const bgX = -(col * displayWidth);
+      const bgY = -(row * displayHeight);
 
       thumb.style.backgroundPosition = `${bgX}px ${bgY}px`;
 
       /* Position */
       const safeLeft = Math.max(
-        width / 2,
-        Math.min(position, containerWidth - width / 2)
-      ) - width / 2;
+        displayWidth / 2,
+        Math.min(position, containerWidth - displayWidth / 2)
+      ) - displayWidth / 2;
 
-      thumb.style.transform = `translate(${safeLeft}px, -${height + 12}px)`;
+      thumb.style.transform = `translate(${safeLeft}px, -12px)`;
 
       /* Label */
       label.textContent = formatTime(time);

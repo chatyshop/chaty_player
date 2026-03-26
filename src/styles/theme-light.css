@@ -81,8 +81,8 @@
   color: #ffffff;
 }
 
-/* Chapter Marker */
-.chatyplayer-root.chatyplayer-theme-light .chatyplayer-chapter-marker {
+/* Chapter Segment */
+.chatyplayer-root.chatyplayer-theme-light .chatyplayer-chapter-segment {
   background: var(--cp-text);
 }
 

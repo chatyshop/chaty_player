@@ -19,7 +19,7 @@ import { createControls } from '../ui/controls'
 import { createTimeline } from '../ui/timeline'
 import { createMiniPlayer } from '../ui/miniPlayer'
 import { selectBestSource } from '../utils/formats'
-import type { PlayerFeature } from '../types/Feature'
+import type { InternalFeatureContext, PlayerFeature } from '../types/Feature'
 import { builtInFeatures } from '../features/featureRegistry'
 
 type PlayerMode = 'normal' | 'mini' | 'theatre' | 'fullscreen'
@@ -50,6 +50,12 @@ export class Player {
   private handleUIShow = () => {}
   private handlePause = () => {}
   private handlePlay = () => {}
+  private handleCorePlay = () => {}
+  private handleCorePause = () => {}
+  private handleCoreEnded = () => {}
+  private handleCoreTimeUpdate = () => {}
+  private handleCoreLoadedMetadata = () => {}
+  private handleCoreError = () => {}
 
   public readonly api
 
@@ -77,8 +83,9 @@ export class Player {
     this.initFeatures()
     this.initMiniPlayer()
 
-    
-
+    this.state.set('muted', this.video.muted)
+    this.state.set('volume', this.video.volume)
+    this.state.set('ready', true)
     this.events.emit('ready')
   }
 
@@ -194,6 +201,12 @@ export class Player {
         break
     }
 
+    this.state.update({
+      mini: next === 'mini',
+      theater: next === 'theatre',
+      fullscreen: next === 'fullscreen'
+    })
+
     this.events.emit('modechange', { prev, next })
   }
 
@@ -261,12 +274,22 @@ export class Player {
 
     const v = this.video
 
-    v.addEventListener('play', () => this.events.emit('play'))
-    v.addEventListener('pause', () => this.events.emit('pause'))
-    v.addEventListener('ended', () => this.events.emit('ended'))
-    v.addEventListener('timeupdate', () => this.events.emit('timeupdate', v.currentTime))
-    v.addEventListener('loadedmetadata', () => this.events.emit('loadedmetadata', v.duration))
-    v.addEventListener('error', () => this.events.emit('error', v.error))
+    this.handleCorePlay = () => this.events.emit('play')
+    this.handleCorePause = () => this.events.emit('pause')
+    this.handleCoreEnded = () => this.events.emit('ended')
+    this.handleCoreTimeUpdate = () => this.events.emit('timeupdate', v.currentTime)
+    this.handleCoreLoadedMetadata = () => {
+      this.state.set('duration', v.duration)
+      this.events.emit('loadedmetadata', v.duration)
+    }
+    this.handleCoreError = () => this.events.emit('error', v.error)
+
+    v.addEventListener('play', this.handleCorePlay)
+    v.addEventListener('pause', this.handleCorePause)
+    v.addEventListener('ended', this.handleCoreEnded)
+    v.addEventListener('timeupdate', this.handleCoreTimeUpdate)
+    v.addEventListener('loadedmetadata', this.handleCoreLoadedMetadata)
+    v.addEventListener('error', this.handleCoreError)
   }
 
   /* ========================================= */
@@ -289,7 +312,7 @@ export class Player {
 
   /* ========================================= */
 
-  public play() { return this.video.play().catch(() => {}) }
+  public play() { return this.video.play() }
   public pause() { this.video.pause() }
   public toggle() { this.video.paused ? this.play() : this.pause() }
 
@@ -318,6 +341,14 @@ export class Player {
   public getTimeline() { return this.timelineLayer }
   public getConfig() { return this.config }
   public getEvents() { return this.events }
+  public getFeatureContext(): InternalFeatureContext {
+    return {
+      lifecycle: this.lifecycle,
+      state: this.state,
+      events: this.events,
+      config: this.config
+    }
+  }
 
   /* ========================================= */
 
@@ -338,6 +369,12 @@ export class Player {
 
     this.video.removeEventListener('pause', this.handlePause)
     this.video.removeEventListener('play', this.handlePlay)
+    this.video.removeEventListener('play', this.handleCorePlay)
+    this.video.removeEventListener('pause', this.handleCorePause)
+    this.video.removeEventListener('ended', this.handleCoreEnded)
+    this.video.removeEventListener('timeupdate', this.handleCoreTimeUpdate)
+    this.video.removeEventListener('loadedmetadata', this.handleCoreLoadedMetadata)
+    this.video.removeEventListener('error', this.handleCoreError)
 
     for (const f of this.activeFeatures) {
       try { f.destroy?.(this) } catch {}

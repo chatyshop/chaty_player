@@ -79,8 +79,8 @@
   color: var(--cp-text);
 }
 
-/* Chapter Marker */
-.chatyplayer-chapter-marker {
+/* Chapter Segment */
+.chatyplayer-chapter-segment {
   background: var(--cp-text);
 }
 

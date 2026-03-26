@@ -88,7 +88,8 @@ export function createMiniPlayer(
   const activateMini = () => {
     if (isMini) return
 
-    lastMode = player.getMode()
+    const currentMode = player.getMode()
+    lastMode = currentMode === 'mini' ? 'normal' : currentMode
     player.setMode('mini')
 
     container.style.cursor = 'grab'
@@ -181,14 +182,22 @@ export function createMiniPlayer(
   --------------------------- */
 
   let dragging = false
+  let pendingDrag = false
   let offsetX = 0
   let offsetY = 0
   let activePointerId: number | null = null
+  let startX = 0
+  let startY = 0
+  const DRAG_THRESHOLD = 6
 
   const onPointerDown = (e: PointerEvent) => {
     if (!isMini) return
+    if (e.button !== 0) return
+    if ((e.target as HTMLElement | null)?.closest('.chatyplayer-mini-back')) return
 
     activePointerId = e.pointerId
+    startX = e.clientX
+    startY = e.clientY
 
     const rect = container.getBoundingClientRect()
 
@@ -202,12 +211,24 @@ export function createMiniPlayer(
       container.setPointerCapture(e.pointerId)
     } catch {}
 
-    dragging = true
-    container.style.cursor = 'grabbing'
+    pendingDrag = true
   }
 
   const onPointerMove = (e: PointerEvent) => {
-    if (!dragging || e.pointerId !== activePointerId) return
+    if (e.pointerId !== activePointerId) return
+
+    if (pendingDrag && !dragging) {
+      const dx = e.clientX - startX
+      const dy = e.clientY - startY
+
+      if (Math.hypot(dx, dy) < DRAG_THRESHOLD) return
+
+      pendingDrag = false
+      dragging = true
+      container.style.cursor = 'grabbing'
+    }
+
+    if (!dragging) return
 
     const x = e.clientX - offsetX
     const y = e.clientY - offsetY
@@ -220,9 +241,11 @@ export function createMiniPlayer(
   }
 
   const onPointerUp = (e: PointerEvent) => {
-    if (!dragging || e.pointerId !== activePointerId) return
+    if (e.pointerId !== activePointerId) return
 
+    const wasDragging = dragging
     dragging = false
+    pendingDrag = false
     activePointerId = null
 
     try {
@@ -230,33 +253,10 @@ export function createMiniPlayer(
     } catch {}
 
     container.style.cursor = 'grab'
-    snapToCorner()
-  }
 
-  /* ---------------------------
-     Click (Desktop Return Fix)
-  --------------------------- */
-
-  const onClick = () => {
-    if (!isMini) return
-    if (dragging) return
-    if (clickCooldown) return
-
-    manualExit = true
-    manualCooldown = true
-
-    deactivateMini()
-
-    container.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    })
-
-    clickCooldown = window.setTimeout(() => {
-      manualExit = false
-      manualCooldown = false
-      clickCooldown = null
-    }, 800)
+    if (wasDragging) {
+      snapToCorner()
+    }
   }
 
   /* ---------------------------
@@ -302,7 +302,6 @@ export function createMiniPlayer(
   --------------------------- */
 
   container.addEventListener('pointerdown', onPointerDown)
-  container.addEventListener('click', onClick)
 
   window.addEventListener('pointermove', onPointerMove, { passive: true })
   window.addEventListener('pointerup', onPointerUp)
@@ -322,7 +321,6 @@ export function createMiniPlayer(
     if (clickCooldown) clearTimeout(clickCooldown)
 
     container.removeEventListener('pointerdown', onPointerDown)
-    container.removeEventListener('click', onClick)
 
     window.removeEventListener('pointermove', onPointerMove)
     window.removeEventListener('pointerup', onPointerUp)

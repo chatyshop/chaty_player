@@ -18,7 +18,7 @@
   width: 100%;
 
   flex-wrap: nowrap;  /* ✅ prevent broken wrapping */
-  overflow: hidden;   /* ✅ avoid overflow bugs */
+  overflow: visible;
 }
 
 /* Left / Right Groups */
@@ -303,7 +303,7 @@
   padding: 8px 10px;
 }
 
-.chatyplayer-mini .chatyplayer-settings {
+.chatyplayer-mini .chatyplayer-settings-wrapper {
   display: none;
 }
 

@@ -33,7 +33,7 @@ export function createTooltip(
     ? config.chapters
     : []
 
-  const hasThumbnailPreview = Boolean(config.thumbnails)
+  const hasChapterTitles = chapters.length > 0
 
   /* =========================================
      Tooltip Element
@@ -107,16 +107,21 @@ export function createTooltip(
 
     if (time === null) {
       tooltip.style.display = 'none'
+      tooltip.classList.remove('is-visible')
       return
     }
 
-    if (!Number.isFinite(time)) return
+    if (!Number.isFinite(time)) {
+      tooltip.style.display = 'none'
+      tooltip.classList.remove('is-visible')
+      return
+    }
 
     const formatted = formatTime(time)
 
-    /* show chapter title only when thumbnails exist */
+    /* show chapter title whenever chapters exist */
 
-    if (hasThumbnailPreview) {
+    if (hasChapterTitles) {
 
       const chapterTitle = getChapterTitle(time)
 
@@ -131,8 +136,13 @@ export function createTooltip(
     }
 
     const rect = timelineElement.getBoundingClientRect()
+    const videoWrapper = timelineElement.closest('.chatyplayer-video-wrapper') as HTMLElement | null
+
+    tooltip.style.display = 'block'
+    tooltip.classList.add('is-visible')
 
     const tooltipWidth = tooltip.offsetWidth || 40
+    const tooltipHeight = tooltip.offsetHeight || 24
 
     const safePosition = clamp(
       (position ?? 0) - tooltipWidth / 2,
@@ -140,9 +150,21 @@ export function createTooltip(
       rect.width - tooltipWidth
     )
 
+    const thumbnail = timelineElement.querySelector('.chatyplayer-thumbnail') as HTMLElement | null
+    const thumbnailHeight =
+      thumbnail && thumbnail.style.display !== 'none'
+        ? thumbnail.getBoundingClientRect().height
+        : 0
+    const desiredBottomOffset = Math.round(thumbnailHeight + 18)
+    const maxBottomOffset = videoWrapper
+      ? Math.max(
+          12,
+          Math.floor(rect.top + rect.height - videoWrapper.getBoundingClientRect().top - tooltipHeight - 8)
+        )
+      : desiredBottomOffset
+
     tooltip.style.left = `${safePosition}px`
-    tooltip.style.bottom = '100%'
-    tooltip.style.display = 'block'
+    tooltip.style.bottom = `calc(100% + ${Math.min(desiredBottomOffset, maxBottomOffset)}px)`
 
   }
 

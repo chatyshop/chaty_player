@@ -32,6 +32,7 @@ export function initGesturesFeature(
   let touchStartY = 0
   let touchStartVolume = 0
   let isSwiping = false
+  let touchStartedOnInteractiveUI = false
 
   /* =========================================
      Utility: detect UI interaction safely
@@ -113,7 +114,8 @@ export function initGesturesFeature(
 
   const onTouchStart = (e: TouchEvent): void => {
 
-    if (isInteractiveEvent(e)) return
+    touchStartedOnInteractiveUI = isInteractiveEvent(e)
+    if (touchStartedOnInteractiveUI) return
     if (e.touches.length !== 1) return
 
     const touch = e.touches[0]
@@ -130,6 +132,7 @@ export function initGesturesFeature(
 
   const onTouchMove = (e: TouchEvent): void => {
 
+    if (touchStartedOnInteractiveUI) return
     if (e.touches.length !== 1) return
 
     const touch = e.touches[0]
@@ -155,7 +158,9 @@ export function initGesturesFeature(
     )
 
     video.volume = newVolume
+    video.muted = newVolume === 0
     state?.set('volume', newVolume)
+    state?.set('muted', video.muted)
   }
 
   /* =========================================
@@ -164,6 +169,10 @@ export function initGesturesFeature(
 
   const onTouchEnd = (e: TouchEvent): void => {
 
+    if (touchStartedOnInteractiveUI) {
+      touchStartedOnInteractiveUI = false
+      return
+    }
     if (isInteractiveEvent(e)) return
     if (isSwiping) return
 
@@ -209,6 +218,7 @@ export function initGesturesFeature(
 
   const onTouchCancel = (): void => {
     isSwiping = false
+    touchStartedOnInteractiveUI = false
   }
 
   /* =========================================
@@ -246,6 +256,9 @@ export function initGesturesFeature(
     container.removeEventListener('touchmove', onTouchMove)
     container.removeEventListener('touchend', onTouchEnd)
     container.removeEventListener('touchcancel', onTouchCancel)
+
+    container.style.userSelect = ''
+    container.style.touchAction = ''
 
   })
 }

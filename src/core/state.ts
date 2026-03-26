@@ -16,6 +16,7 @@ export interface PlayerState {
   muted: boolean;
   volume: number;
   speed: number;
+  quality: string;
   currentTime: number;
   duration: number;
   fullscreen: boolean;
@@ -43,6 +44,7 @@ export class StateManager {
       muted: false,
       volume: 1,
       speed: 1,
+      quality: 'auto',
       currentTime: 0,
       duration: 0,
       fullscreen: false,
@@ -157,6 +159,7 @@ export class StateManager {
       destroyed: true
     };
 
+    this.notify();
     this.listeners.clear();
   }
 

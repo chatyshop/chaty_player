@@ -120,17 +120,12 @@
 
   white-space: nowrap;
 
+  opacity: 0;
   transform: translateY(-10px);
 
   pointer-events: none;
 
-  z-index: 50;
-}
-
-/* visible state */
-
-.chatyplayer-tooltip[style*="display: block"] {
-  opacity: 1;
+  z-index: 80;
 }
 
 /* =========================================================

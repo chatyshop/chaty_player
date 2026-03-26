@@ -52,7 +52,7 @@ export function createTimeline(
   /* ================= TOOLTIP + THUMB ================= */
 
   const updateTooltip = createTooltip(player, progressWrapper, lifecycle);
-  const updateThumbnail = createThumbnail(player, progressWrapper);
+  const updateThumbnail = createThumbnail(player, progressWrapper, lifecycle);
 
   /* ================= STATE ================= */
 
@@ -116,15 +116,13 @@ export function createTimeline(
       const percent = parseFloat(seekInput.value);
       if (!Number.isFinite(percent)) return;
 
-      const wasPlaying = !video.paused;
-
       const newTime = (percent / 100) * duration;
+      const previewOffset = (percent / 100) * progressWrapper.getBoundingClientRect().width;
+
+      updateTooltip(newTime, previewOffset);
+      updateThumbnail?.(newTime, previewOffset);
 
       player.seek(newTime);
-
-      if (wasPlaying) {
-        player.play().catch(() => {});
-      }
     });
   };
 
@@ -134,6 +132,8 @@ export function createTimeline(
 
   const onDragEnd = (): void => {
     isDragging = false;
+    updateTooltip(null);
+    updateThumbnail?.(NaN, 0);
   };
 
   /* ================= HOVER / TOUCH ================= */
@@ -182,16 +182,17 @@ export function createTimeline(
   seekInput.addEventListener('pointerup', onDragEnd);
   seekInput.addEventListener('pointercancel', onDragEnd);
 
-  seekInput.addEventListener('click', (e) => e.stopPropagation());
+  const onSeekClick = (e: Event): void => {
+    e.stopPropagation();
+  };
+
+  seekInput.addEventListener('click', onSeekClick);
 
   /* ================= VIDEO ================= */
 
   const onLoadedMetadata = () => {
     updateProgress();
     updateBuffer();
-
-    // 🔥 FIX: initialize thumbnail engine
-    updateThumbnail?.(0, 0);
   };
 
   const onTimeUpdate = updateProgress;
@@ -211,6 +212,7 @@ export function createTimeline(
     seekInput.removeEventListener('pointerdown', onDragStart);
     seekInput.removeEventListener('pointerup', onDragEnd);
     seekInput.removeEventListener('pointercancel', onDragEnd);
+    seekInput.removeEventListener('click', onSeekClick);
 
     progressWrapper.removeEventListener('pointermove', onPointerMove);
     progressWrapper.removeEventListener('pointerleave', onPointerLeave);

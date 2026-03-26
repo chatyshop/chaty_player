@@ -6,6 +6,7 @@
 import type { Player } from '../core/Player'
 import type { LifecycleManager } from '../core/lifecycle'
 import type { StateManager } from '../core/state'
+import { Icons } from './icons'
 
 export function createSettings(
   player: Player,
@@ -25,7 +26,7 @@ export function createSettings(
   toggleBtn.type = 'button'
   toggleBtn.className = 'chatyplayer-btn chatyplayer-settings-toggle'
   toggleBtn.setAttribute('aria-label', 'Settings')
-  toggleBtn.textContent = '⚙'
+  toggleBtn.appendChild(Icons.settings())
 
   const panel = document.createElement('div')
   panel.className = 'chatyplayer-settings-panel'
@@ -170,23 +171,27 @@ export function createSettings(
   createBackButton(speedMenu)
 
   const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2]
-  let currentSpeed = 1
+  let currentSpeed = state?.get('speed') ?? video.playbackRate ?? 1
+
+  const renderSpeedUI = () => {
+    speedBtn.innerHTML = `<span>Playback Speed</span><span>${currentSpeed}x ›</span>`
+
+    speedMenu.querySelectorAll<HTMLButtonElement>('.chatyplayer-settings-btn').forEach(btn => {
+      const rate = Number.parseFloat(btn.dataset.speedRate ?? '')
+      btn.classList.toggle('is-active', Number.isFinite(rate) && rate === currentSpeed)
+    })
+  }
 
   speeds.forEach(rate => {
     const btn = document.createElement('button')
     btn.className = 'chatyplayer-settings-btn'
     btn.textContent = `${rate}x`
+    btn.dataset.speedRate = String(rate)
 
     if (rate === currentSpeed) btn.classList.add('is-active')
 
     const handler = () => {
-      currentSpeed = rate
       player.setSpeed(rate)
-      speedBtn.innerHTML = `<span>Playback Speed</span><span>${currentSpeed}x ›</span>`
-
-      speedMenu.querySelectorAll('button').forEach(b => b.classList.remove('is-active'))
-      btn.classList.add('is-active')
-
       showMenu('playback')
     }
 
@@ -206,36 +211,71 @@ export function createSettings(
 
   playbackMenu.appendChild(speedBtn)
 
+  const onSpeedChange = (rate: number) => {
+    currentSpeed = rate
+    renderSpeedUI()
+  }
+
+  events.on('speedchange', onSpeedChange)
+  renderSpeedUI()
+
   /* QUALITY */
 
-  events.on('ready', () => {
+  let qualityMenu: HTMLElement | null = null
+  let qualityBtn: HTMLButtonElement | null = null
+
+  const renderQualityUI = () => {
+    const qualityAPI = (player as any)?.quality
+    const currentQuality = qualityAPI?.getCurrentQuality?.()
+
+    if (qualityBtn) {
+      const qualityLabel =
+        currentQuality === 'auto'
+          ? 'Auto'
+          : typeof currentQuality === 'string' && currentQuality
+            ? currentQuality.toUpperCase()
+            : ''
+
+      qualityBtn.innerHTML = qualityLabel
+        ? `<span>Quality</span><span>${qualityLabel} ›</span>`
+        : `<span>Quality</span><span>›</span>`
+    }
+
+    if (qualityMenu) {
+      qualityMenu
+        .querySelectorAll<HTMLButtonElement>('.chatyplayer-settings-btn[data-quality-value]')
+        .forEach(btn => {
+          btn.classList.toggle(
+            'is-active',
+            btn.dataset.qualityValue === currentQuality
+          )
+        })
+    }
+  }
+
+  const offReady = events.on('ready', () => {
     const qualityAPI = (player as any)?.quality
     if (!qualityAPI?.getAvailableQualities) return
 
     const qualities = qualityAPI.getAvailableQualities()
     if (!Array.isArray(qualities) || qualities.length <= 1) return
 
-    const qualityMenu = createMenu('quality')
-    createBackButton(qualityMenu)
+    qualityMenu = createMenu('quality')
+    const currentQualityMenu = qualityMenu
+    createBackButton(currentQualityMenu)
 
     qualities.forEach((q: string) => {
       const btn = document.createElement('button')
       btn.className = 'chatyplayer-settings-btn'
+      btn.dataset.qualityValue = q
 
       const label = q === 'auto' ? 'Auto' : q.toUpperCase()
       btn.textContent = label
-
-      if (q === qualityAPI.getCurrentQuality?.()) {
-        btn.classList.add('is-active')
-      }
 
       const handler = () => {
         try {
           qualityAPI.setQuality?.(q)
         } catch {}
-
-        qualityMenu.querySelectorAll('button').forEach(b => b.classList.remove('is-active'))
-        btn.classList.add('is-active')
 
         showMenu('playback')
       }
@@ -246,16 +286,23 @@ export function createSettings(
         btn.removeEventListener('click', handler)
       })
 
-      qualityMenu.appendChild(btn)
+      currentQualityMenu.appendChild(btn)
     })
 
-    const qualityBtn = document.createElement('button')
+    qualityBtn = document.createElement('button')
     qualityBtn.className = 'chatyplayer-settings-btn'
     qualityBtn.innerHTML = `<span>Quality</span><span>›</span>`
     qualityBtn.addEventListener('click', () => showMenu('quality'))
 
     playbackMenu.appendChild(qualityBtn)
+    renderQualityUI()
   })
+
+  const onQualityChange = () => {
+    renderQualityUI()
+  }
+
+  events.on('qualitychange', onQualityChange)
 
   /* LOOP */
 
@@ -282,7 +329,11 @@ export function createSettings(
 
   const pipSupported =
     'pictureInPictureEnabled' in document &&
-    typeof (video as any)?.requestPictureInPicture === 'function'
+    (document as any).pictureInPictureEnabled === true &&
+    typeof (video as any)?.requestPictureInPicture === 'function' &&
+    !(video as HTMLVideoElement & {
+      disablePictureInPicture?: boolean
+    }).disablePictureInPicture
 
   if (!pipSupported) pipBtn.disabled = true
 
@@ -331,5 +382,8 @@ export function createSettings(
     toggleBtn.removeEventListener('click', onToggleClick)
     document.removeEventListener('pointerdown', onOutsideClick)
     document.removeEventListener('keydown', onKeyDown)
+    events.off('speedchange', onSpeedChange)
+    events.off('qualitychange', onQualityChange)
+    offReady()
   })
 }

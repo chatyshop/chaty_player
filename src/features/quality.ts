@@ -34,6 +34,7 @@ export function initQualityFeature(
 
   let lastAutoSwitch = 0
   const AUTO_SWITCH_COOLDOWN = 8000
+  let switchTimeout: number | undefined
 
   const isMobile =
     typeof navigator !== 'undefined' &&
@@ -49,6 +50,11 @@ export function initQualityFeature(
   }
 
   const getCurrentQuality = (): QualityLabel => currentQuality
+
+  const syncQualityState = (quality: QualityLabel): void => {
+    state?.set('quality', quality)
+    events?.emit?.('qualitychange', quality)
+  }
 
   const getCurrentSourceIndex = (): number => {
     const activeSrc = video.currentSrc || video.src
@@ -72,12 +78,14 @@ export function initQualityFeature(
     if (video.currentSrc === source.src) return
 
     switching = true
+    if (switchTimeout) clearTimeout(switchTimeout)
 
     const currentTime = Number.isFinite(video.currentTime)
       ? video.currentTime
       : 0
 
     const wasPlaying = !video.paused
+    const targetQuality = autoMode ? 'auto' : source.label
 
     video.pause()
 
@@ -101,18 +109,25 @@ export function initQualityFeature(
         playing: wasPlaying
       })
 
-      currentQuality = source.label
-      events?.emit?.('qualitychange', source.label)
-
       video.removeEventListener('loadedmetadata', restorePlayback)
+      video.removeEventListener('error', failSwitch)
+      if (switchTimeout) clearTimeout(switchTimeout)
 
-      // release lock safely
-      setTimeout(() => {
-        switching = false
-      }, 2000)
+      currentQuality = targetQuality
+      syncQualityState(currentQuality)
+      switching = false
+    }
+
+    const failSwitch = () => {
+      video.removeEventListener('loadedmetadata', restorePlayback)
+      video.removeEventListener('error', failSwitch)
+      if (switchTimeout) clearTimeout(switchTimeout)
+      switching = false
     }
 
     video.addEventListener('loadedmetadata', restorePlayback)
+    video.addEventListener('error', failSwitch, { once: true })
+    switchTimeout = window.setTimeout(failSwitch, 5000)
   }
 
   /* =========================================
@@ -123,11 +138,8 @@ export function initQualityFeature(
 
     if (label === 'auto') {
       autoMode = true
-      const currentIndex = getCurrentSourceIndex()
-      currentQuality =
-        currentIndex >= 0 && sources[currentIndex]
-          ? sources[currentIndex]!.label
-          : 'auto'
+      currentQuality = 'auto'
+      syncQualityState(currentQuality)
       return
     }
 
@@ -136,7 +148,6 @@ export function initQualityFeature(
 
     autoMode = false
     currentQuality = label
-
     switchSource(source)
   }
 
@@ -192,7 +203,6 @@ export function initQualityFeature(
     const next = sources[index + 1]
     if (!next) return
 
-    currentQuality = next.label
     switchSource(next)
   }
 
@@ -204,7 +214,6 @@ export function initQualityFeature(
     const prev = sources[index - 1]
     if (!prev) return
 
-    currentQuality = prev.label
     switchSource(prev)
   }
 
@@ -220,6 +229,7 @@ export function initQualityFeature(
 
   lifecycle?.registerCleanup(() => {
     video.removeEventListener('timeupdate', handleBuffering)
+    if (switchTimeout) clearTimeout(switchTimeout)
   })
 
   ;(player as any).setQuality = (label: QualityLabel) => {
