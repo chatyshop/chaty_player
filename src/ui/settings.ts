@@ -1,6 +1,6 @@
 /**
  * ChatyPlayer v1.0
- * Settings Panel Module (Production Ready - YouTube Style)
+ * Settings Panel Module (Refactored - Production Safe + Fullscreen Ready)
  */
 
 import type { Player } from '../core/Player'
@@ -16,7 +16,6 @@ export function createSettings(
 
   const video = player.getVideo()
   const events = player.getEvents()
-
   /* ========================================= */
 
   const wrapper = document.createElement('div')
@@ -42,20 +41,28 @@ export function createSettings(
   let isOpen = false
 
   const openPanel = () => {
+    if (isOpen) return
     isOpen = true
+
     panel.classList.add('is-open')
     panel.setAttribute('aria-hidden', 'false')
+
+    // focus first item
+    const firstBtn = panel.querySelector<HTMLButtonElement>('button')
+    firstBtn?.focus()
   }
 
   const closePanel = () => {
+    if (!isOpen) return
     isOpen = false
+
     panel.classList.remove('is-open')
     panel.setAttribute('aria-hidden', 'true')
+
+    toggleBtn.focus()
   }
 
-  const togglePanel = () => {
-    isOpen ? closePanel() : openPanel()
-  }
+  const togglePanel = () => (isOpen ? closePanel() : openPanel())
 
   const onToggleClick = (e: Event) => {
     e.stopPropagation()
@@ -65,37 +72,44 @@ export function createSettings(
   toggleBtn.addEventListener('click', onToggleClick)
 
   /* ========================================= */
-  /* SAFE outside click */
+  /* Scoped outside click */
 
   const onOutsideClick = (e: Event) => {
     const target = e.target as Node | null
     if (!target) return
 
-    if (panel.contains(target)) return
-    if (toggleBtn.contains(target)) return
-
+    if (wrapper.contains(target)) return
     closePanel()
   }
 
   document.addEventListener('pointerdown', onOutsideClick)
 
   /* ========================================= */
+  /* ESC key */
+
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') closePanel()
+  }
+
+  document.addEventListener('keydown', onKeyDown)
+
+  /* ========================================= */
+  /* MENU SYSTEM (class-based, no inline styles) */
 
   const menus: Record<string, HTMLElement> = {}
 
   const showMenu = (name: string) => {
     Object.values(menus).forEach(menu => {
-      menu.style.display = 'none'
+      menu.classList.remove('active')
     })
 
     const target = menus[name]
-    if (target) target.style.display = 'block'
+    if (target) target.classList.add('active')
   }
 
   const createMenu = (name: string): HTMLElement => {
     const menu = document.createElement('div')
     menu.className = 'chatyplayer-settings-menu'
-    menu.style.display = 'none'
 
     panel.appendChild(menu)
     menus[name] = menu
@@ -127,7 +141,7 @@ export function createSettings(
   const createMenuButton = (label: string, targetMenu: string) => {
     const btn = document.createElement('button')
     btn.className = 'chatyplayer-settings-btn'
-    btn.textContent = `${label} ›`
+    btn.innerHTML = `<span>${label}</span><span>›</span>`
 
     const handler = () => showMenu(targetMenu)
 
@@ -145,12 +159,12 @@ export function createSettings(
   createMenuButton('View', 'view')
 
   /* ========================================= */
-  /* PLAYBACK MENU */
+  /* PLAYBACK */
 
   const playbackMenu = createMenu('playback')
   createBackButton(playbackMenu)
 
-  /* ---------- SPEED MENU ---------- */
+  /* SPEED */
 
   const speedMenu = createMenu('speed')
   createBackButton(speedMenu)
@@ -168,6 +182,7 @@ export function createSettings(
     const handler = () => {
       currentSpeed = rate
       player.setSpeed(rate)
+      speedBtn.innerHTML = `<span>Playback Speed</span><span>${currentSpeed}x ›</span>`
 
       speedMenu.querySelectorAll('button').forEach(b => b.classList.remove('is-active'))
       btn.classList.add('is-active')
@@ -186,12 +201,12 @@ export function createSettings(
 
   const speedBtn = document.createElement('button')
   speedBtn.className = 'chatyplayer-settings-btn'
-  speedBtn.textContent = 'Playback Speed ›'
+  speedBtn.innerHTML = `<span>Playback Speed</span><span>${currentSpeed}x ›</span>`
   speedBtn.addEventListener('click', () => showMenu('speed'))
 
   playbackMenu.appendChild(speedBtn)
 
-  /* ---------- QUALITY MENU ---------- */
+  /* QUALITY */
 
   events.on('ready', () => {
     const qualityAPI = (player as any)?.quality
@@ -236,28 +251,27 @@ export function createSettings(
 
     const qualityBtn = document.createElement('button')
     qualityBtn.className = 'chatyplayer-settings-btn'
-    qualityBtn.textContent = 'Quality ›'
+    qualityBtn.innerHTML = `<span>Quality</span><span>›</span>`
     qualityBtn.addEventListener('click', () => showMenu('quality'))
 
     playbackMenu.appendChild(qualityBtn)
   })
 
-  /* ---------- LOOP ---------- */
+  /* LOOP */
 
   const loopBtn = document.createElement('button')
   loopBtn.className = 'chatyplayer-settings-btn'
   loopBtn.textContent = 'Toggle Loop'
 
-  const toggleLoop = () => {
+  loopBtn.addEventListener('click', () => {
     video.loop = !video.loop
     closePanel()
-  }
+  })
 
-  loopBtn.addEventListener('click', toggleLoop)
   playbackMenu.appendChild(loopBtn)
 
   /* ========================================= */
-  /* PLAYER MENU */
+  /* PLAYER */
 
   const playerMenu = createMenu('player')
   createBackButton(playerMenu)
@@ -272,24 +286,17 @@ export function createSettings(
 
   if (!pipSupported) pipBtn.disabled = true
 
-  const togglePiP = async () => {
+  pipBtn.addEventListener('click', async () => {
     try {
-      if (!document.pictureInPictureElement) {
-        await (video as any).requestPictureInPicture()
-        state?.set?.('pip', true)
-      } else {
-        await document.exitPictureInPicture()
-        state?.set?.('pip', false)
-      }
+      await (player as any).togglePiP?.()
       closePanel()
     } catch {}
-  }
+  })
 
-  pipBtn.addEventListener('click', togglePiP)
   playerMenu.appendChild(pipBtn)
 
   /* ========================================= */
-  /* VIEW MENU */
+  /* VIEW */
 
   const viewMenu = createMenu('view')
   createBackButton(viewMenu)
@@ -323,5 +330,6 @@ export function createSettings(
   lifecycle?.registerCleanup(() => {
     toggleBtn.removeEventListener('click', onToggleClick)
     document.removeEventListener('pointerdown', onOutsideClick)
+    document.removeEventListener('keydown', onKeyDown)
   })
 }

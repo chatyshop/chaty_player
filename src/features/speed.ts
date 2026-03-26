@@ -35,11 +35,9 @@ export function initSpeedFeature(
 
     video.playbackRate = clamped;
 
-    state?.update({
-      playing: !video.paused
-    });
+    state?.set('speed', clamped);
 
-    events?.emit('speedchange' as any, clamped);
+    events?.emit('speedchange', clamped);
   };
 
   /**
@@ -60,9 +58,7 @@ export function initSpeedFeature(
    * Sync state when metadata loads
    */
   const onLoadedMetadata = () => {
-    state?.update({
-      playing: !video.paused
-    });
+    state?.set('speed', video.playbackRate);
   };
 
   video.addEventListener('loadedmetadata', onLoadedMetadata);

@@ -17,6 +17,10 @@ declare global {
   interface Window {
     ChatyPlayer?: ChatyPlayerAPI;
   }
+
+  interface HTMLElement {
+    __chatyPlayerInstance__?: Player;
+  }
 }
 
 /* =========================================
@@ -53,6 +57,7 @@ function initPlayer(container: HTMLElement): Player | null {
 
     // Mark initialized
     container.setAttribute(INIT_ATTR, "true");
+    container.__chatyPlayerInstance__ = player;
 
     return player;
   } catch (error) {
@@ -87,6 +92,8 @@ function create(container: HTMLElement): Player | null {
 
   // Allow safe re-init (React / SPA safe)
   if (container.hasAttribute(INIT_ATTR)) {
+    container.__chatyPlayerInstance__?.destroy();
+    delete container.__chatyPlayerInstance__;
     container.removeAttribute(INIT_ATTR);
     container.textContent = ""; // safe DOM cleanup
   }

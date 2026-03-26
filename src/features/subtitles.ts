@@ -212,6 +212,14 @@ export function initSubtitlesFeature(
   /* ========================================= */
 
   const updateSubtitles = () => {
+    const subtitleMenu =
+      container.querySelector('.chatyplayer-subtitle-menu') as HTMLElement | null
+
+    if (subtitleMenu && subtitleMenu.offsetParent !== null) {
+      subtitleText.innerHTML = ''
+      return
+    }
+
     if (destroyed || !activeLang) return
 
     const time = video.currentTime

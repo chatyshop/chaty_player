@@ -77,13 +77,13 @@ export function initFullscreenFeature(
       const active = isFullscreen()
       state?.set('fullscreen', active)
 
-      // Only sync when entering fullscreen externally
       if (active && player.getMode() !== 'fullscreen') {
         player.setMode('fullscreen')
       }
 
-      // ❗ Do NOT force exit mode
-      // Let user or UI decide (normal/theatre/mini)
+      if (!active && player.getMode() === 'fullscreen') {
+        player.setMode('normal')
+      }
 
     } finally {
       syncing = false

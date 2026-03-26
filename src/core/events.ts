@@ -32,6 +32,7 @@ export type PlayerEventMap = {
 
   subtitlechange: string | null;
   qualitychange: string;
+  speedchange: number;
 
   theatre: boolean;
   fullscreen: boolean;

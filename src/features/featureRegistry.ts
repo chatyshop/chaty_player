@@ -10,6 +10,9 @@
  */
 
 import type { Player } from '../core/Player'
+import type { EventEmitter } from '../core/events'
+import type { LifecycleManager } from '../core/lifecycle'
+import type { StateManager } from '../core/state'
 import type { PlayerFeature } from '../types/Feature'
 
 import { initFullscreenFeature } from './fullscreen'
@@ -31,71 +34,47 @@ Utility: Safe Feature Wrapper
 ========================================= */
 
 function wrapFeature(
-name: string,
-initializer: (player: Player) => void
+  name: string,
+  initializer: (
+    player: Player,
+    lifecycle?: LifecycleManager,
+    state?: StateManager,
+    events?: EventEmitter
+  ) => void
 ): PlayerFeature {
 
-return {
+  return {
 
-name,
+    name,
 
-init(player: Player): void {
+    init(player: Player): void {
+      if (!player) return
 
-  if (!player) return
+      const featureHost = player as unknown as {
+        lifecycle?: LifecycleManager
+        state?: StateManager
+        events?: EventEmitter
+      }
 
-  try {
+      try {
+        initializer(
+          player,
+          featureHost.lifecycle,
+          featureHost.state,
+          featureHost.events
+        )
+      } catch (error) {
+        console.error(
+          `[ChatyPlayer] Feature "${name}" failed during init.`,
+          error
+        )
+      }
+    },
 
-    initializer(player)
-
-  } catch (error) {
-
-    console.error(
-      `[ChatyPlayer] Feature "${name}" failed during init.`,
-      error
-    )
-
-  }
-
-},
-
-destroy(player: Player): void {
-
-  try {
-
-    const destroyMethod =
-      (player as unknown as Record<string, unknown>)[
-        `destroy${capitalize(name)}`
-      ]
-
-    if (typeof destroyMethod === 'function') {
-      (destroyMethod as Function).call(player)
+    destroy(): void {
+      // Cleanup is owned by LifecycleManager registrations inside each feature.
     }
-
-  } catch (error) {
-
-    console.error(
-      `[ChatyPlayer] Feature "${name}" failed during destroy.`,
-      error
-    )
-
   }
-
-}
-
-}
-
-}
-
-/* =========================================
-Capitalize helper
-========================================= */
-
-function capitalize(value: string): string {
-
-if (!value) return ''
-
-return value.charAt(0).toUpperCase() + value.slice(1)
-
 }
 
 /* =========================================

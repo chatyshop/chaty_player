@@ -50,6 +50,16 @@ export function initQualityFeature(
 
   const getCurrentQuality = (): QualityLabel => currentQuality
 
+  const getCurrentSourceIndex = (): number => {
+    const activeSrc = video.currentSrc || video.src
+    const directIndex = sources.findIndex(s => s.src === activeSrc)
+    if (directIndex >= 0) return directIndex
+
+    if (currentQuality === 'auto') return 0
+
+    return sources.findIndex(s => s.label === currentQuality)
+  }
+
   /* =========================================
      SWITCH SOURCE (SAFE)
   ========================================= */
@@ -91,6 +101,7 @@ export function initQualityFeature(
         playing: wasPlaying
       })
 
+      currentQuality = source.label
       events?.emit?.('qualitychange', source.label)
 
       video.removeEventListener('loadedmetadata', restorePlayback)
@@ -112,7 +123,11 @@ export function initQualityFeature(
 
     if (label === 'auto') {
       autoMode = true
-      currentQuality = 'auto'
+      const currentIndex = getCurrentSourceIndex()
+      currentQuality =
+        currentIndex >= 0 && sources[currentIndex]
+          ? sources[currentIndex]!.label
+          : 'auto'
       return
     }
 
@@ -171,7 +186,7 @@ export function initQualityFeature(
 
   const increaseQuality = (): void => {
 
-    const index = sources.findIndex(s => s.label === currentQuality)
+    const index = getCurrentSourceIndex()
     if (index < 0) return
 
     const next = sources[index + 1]
@@ -183,7 +198,7 @@ export function initQualityFeature(
 
   const decreaseQuality = (): void => {
 
-    const index = sources.findIndex(s => s.label === currentQuality)
+    const index = getCurrentSourceIndex()
     if (index <= 0) return
 
     const prev = sources[index - 1]
@@ -206,6 +221,10 @@ export function initQualityFeature(
   lifecycle?.registerCleanup(() => {
     video.removeEventListener('timeupdate', handleBuffering)
   })
+
+  ;(player as any).setQuality = (label: QualityLabel) => {
+    setQuality(label)
+  }
 
   /* =========================================
      PUBLIC API

@@ -66,6 +66,8 @@ export class Player {
     this.container = container
     this.config = config
     this.events = new EventEmitter()
+    this.state = new StateManager()
+    this.lifecycle = new LifecycleManager()
 
     this.video = this.createVideoElement()
     this.api = createPublicAPI(this, this.events)
@@ -74,8 +76,6 @@ export class Player {
     this.initAutoHide()
     this.initFeatures()
     this.initMiniPlayer()
-    this.state = new StateManager()
-    this.lifecycle = new LifecycleManager()
 
     
 
@@ -105,6 +105,8 @@ export class Player {
     }
 
     video.src = source.src
+
+    video.muted = this.config.muted
 
     if (this.config.autoplay) {
       video.autoplay = true
@@ -151,8 +153,8 @@ export class Player {
 
     this.container.appendChild(wrapper)
 
-    createTimeline(this, this.timelineLayer)
-    createControls(this, controlsLayer)
+    createTimeline(this, this.timelineLayer, this.lifecycle, this.state)
+    createControls(this, controlsLayer, this.lifecycle, this.state, this.events)
   }
 
   /* =========================================
@@ -213,7 +215,7 @@ export class Player {
 
   private initMiniPlayer(): void {
     try {
-      createMiniPlayer(this)
+      createMiniPlayer(this, this.lifecycle, this.state)
     } catch (error) {
       console.warn('[ChatyPlayer] MiniPlayer failed.', error)
     }
@@ -305,6 +307,8 @@ export class Player {
   public setSpeed(r: number) {
     if (!Number.isFinite(r) || r <= 0) return
     this.video.playbackRate = r
+    this.state.set('speed', r)
+    this.events.emit('speedchange', r)
   }
 
   /* ========================================= */
@@ -321,6 +325,10 @@ export class Player {
 
     if (this.destroyed) return
 
+    delete (this.container as HTMLElement & {
+      __chatyPlayerInstance__?: Player
+    }).__chatyPlayerInstance__
+
     this.pause()
 
     if (this.hideTimeout) clearTimeout(this.hideTimeout)
@@ -335,13 +343,8 @@ export class Player {
       try { f.destroy?.(this) } catch {}
     }
 
-    this.video.removeAttribute('src')
-    this.video.load()
-
     this.events.emit('destroy')
-    this.events.destroy()
-
-    this.container.textContent = ''
+    this.lifecycle.destroy(this, this.state, this.events)
     this.container.classList.remove('chatyplayer-root')
 
     this.activeFeatures = []

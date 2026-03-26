@@ -205,6 +205,7 @@ const buildSubtitleMenu = (): void => {
 
   buildSubtitleMenu()
   subtitleMenu.style.display = 'none'
+  container.classList.remove('chatyplayer-subtitle-menu-open')
 })
 
   list.appendChild(offItem)
@@ -231,6 +232,7 @@ const buildSubtitleMenu = (): void => {
 
   buildSubtitleMenu()
   subtitleMenu.style.display = 'none'
+  container.classList.remove('chatyplayer-subtitle-menu-open')
 })
 
     list.appendChild(item)
@@ -256,11 +258,13 @@ const toggleSubtitleMenu = (): void => {
 
   if (isOpen) {
     subtitleMenu.style.display = 'none'
+    container.classList.remove('chatyplayer-subtitle-menu-open')
     return
   }
 
   buildSubtitleMenu()
   subtitleMenu.style.display = 'block'
+  container.classList.add('chatyplayer-subtitle-menu-open')
 }
 
 /* =========================================
@@ -277,6 +281,7 @@ const onOutsideClick = (e: Event): void => {
     !subtitleBtn.contains(target)
   ) {
     subtitleMenu.style.display = 'none'
+    container.classList.remove('chatyplayer-subtitle-menu-open')
   }
 }
 
@@ -332,15 +337,8 @@ lifecycle?.registerCleanup(() => {
 
   const toggleFullscreen = (): void => {
     subtitleMenu.style.display = 'none'
-
-    const doc: any = document
-    const el: any = container
-
-    if (!doc.fullscreenElement && !doc.webkitFullscreenElement) {
-      (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el)
-    } else {
-      (doc.exitFullscreen || doc.webkitExitFullscreen)?.call(doc)
-    }
+    container.classList.remove('chatyplayer-subtitle-menu-open')
+    player.toggleFullscreen()
   }
 
   const onFullscreenChange = (): void => {
@@ -400,7 +398,7 @@ lifecycle?.registerCleanup(() => {
     volumeSlider.removeEventListener('input', changeVolume)
 
     subtitleBtn.removeEventListener('click', onSubtitleClick)
-    document.removeEventListener('pointerdown', onOutsideClick)
+    document.removeEventListener('pointerdown', onPointerDown)
 
     fullscreenBtn.removeEventListener('click', toggleFullscreen)
     document.removeEventListener('fullscreenchange', onFullscreenChange)

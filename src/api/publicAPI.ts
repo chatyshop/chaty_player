@@ -30,9 +30,6 @@ export interface ChatyPlayerAPI {
   getAvailableSubtitles(): string[] // ✅ NEW
   getCurrentSubtitle?: () => string | null
 
-  captureScreenshot(): string | null
-  downloadScreenshot(): void
-
   getTimestampLink(): string | null
 
   on<K extends EventKey>(
@@ -185,25 +182,6 @@ export function createPublicAPI(
       } catch {
         return []
       }
-    },
-
-    /* ========================================= */
-
-    captureScreenshot() {
-      const fn = getFeatureMethod('captureScreenshot')
-
-      if (!fn) return null
-
-      try {
-        const result = fn.call(player)
-        return typeof result === 'string' ? result : null
-      } catch {
-        return null
-      }
-    },
-
-    downloadScreenshot() {
-      callFeature('downloadScreenshot')
     },
 
     getTimestampLink() {

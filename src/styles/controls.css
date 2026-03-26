@@ -196,6 +196,10 @@
     padding: 6px 10px;
   }
 
+  .chatyplayer-controls-right {
+    gap: 6px;
+  }
+
   .chatyplayer-btn {
     font-size: 12px;
     padding: 4px;
@@ -206,11 +210,6 @@
     display: none;
   }
 
-  /* optional (recommended) */
-  .chatyplayer-settings {
-    display: none;
-  }
-
   .chatyplayer-subtitles {
     font-size: 11px;
   }
@@ -218,6 +217,27 @@
   .chatyplayer-subtitle-menu {
     right: 5px;
     width: min(180px, 90vw);
+  }
+}
+
+@media (max-width: 480px) {
+  .chatyplayer-subtitle-menu {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 68px;
+
+    width: auto;
+    max-width: none;
+    max-height: 188px;
+
+    border-radius: 12px;
+    z-index: 10020;
+  }
+
+  .chaty-subtitle-list li {
+    padding: 8px 14px;
+    font-size: 13px;
   }
 }
 

@@ -18,14 +18,14 @@
 
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 
-  overflow: hidden;
+  overflow: visible;
 
   user-select: none;
   -webkit-user-select: none;
 
   touch-action: manipulation;
 
-  contain: layout style paint;
+  contain: style;
 }
 
 /* =========================================================
@@ -37,7 +37,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   background: #000;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* =========================================================
@@ -95,6 +95,7 @@
   bottom: 0;
   height: 50px;
   z-index: 30;
+  overflow: visible !important;
 }
 
 /* Controls Gradient */
@@ -154,8 +155,7 @@
   bottom: 16px;
   right: 16px;
 
-  width: 260px !important;   /* ✅ single source of truth */
-
+  width: 260px !important;   
   aspect-ratio: 16 / 9;
 
   max-width: none !important;
@@ -309,6 +309,11 @@
   z-index: 50;
 }
 
+.chatyplayer-root.chatyplayer-subtitle-menu-open .chatyplayer-subtitle-layer {
+  opacity: 0;
+  visibility: hidden;
+}
+
 .chatyplayer-subtitle-text {
   max-width: 80%;
   color: white;
@@ -338,6 +343,9 @@
    ========================================================= */
 
 @media (max-width: 640px) {
+  .chatyplayer-root {
+    contain: none;
+  }
 
   .chatyplayer-volume-slider {
     width: 60px;

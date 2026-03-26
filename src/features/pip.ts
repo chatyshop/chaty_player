@@ -137,14 +137,14 @@ export function initPiPFeature(
   const onEnter = (): void => {
 
     state?.set('pip', true)
-    events?.emit('pipchange' as any, true)
+    events?.emit('pipchange', true)
 
   }
 
   const onLeave = (): void => {
 
     state?.set('pip', false)
-    events?.emit('pipchange' as any, false)
+    events?.emit('pipchange', false)
 
     autoPiPTriggered = false
 
@@ -224,6 +224,10 @@ export function initPiPFeature(
     }
 
   })
+
+  ;(player as any).togglePiP = () => {
+    void togglePiP()
+  }
 
   /* =========================================
      Public API

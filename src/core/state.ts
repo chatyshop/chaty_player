@@ -15,6 +15,7 @@ export interface PlayerState {
   playing: boolean;
   muted: boolean;
   volume: number;
+  speed: number;
   currentTime: number;
   duration: number;
   fullscreen: boolean;
@@ -41,6 +42,7 @@ export class StateManager {
       playing: false,
       muted: false,
       volume: 1,
+      speed: 1,
       currentTime: 0,
       duration: 0,
       fullscreen: false,

@@ -93,6 +93,8 @@ export function initTimestampFeature(
     video.removeEventListener('loadedmetadata', applyTimestamp);
   });
 
+  ;(player as any).getTimestampLink = getTimestampLink;
+
   return {
     getTimestampLink
   };

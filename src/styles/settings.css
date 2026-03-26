@@ -1,30 +1,33 @@
 /* =========================================================
    ChatyPlayer v1.0
-   Settings Panel Styles (Production Ready)
-   settings.css
+   Settings Panel Styles (Final Production Ready)
    ========================================================= */
 
 /* Wrapper */
 .chatyplayer-settings-wrapper {
   position: relative;
   display: inline-block;
-  z-index: 9999; /* ✅ ensure top layer */
+  max-width: 100%;
+  z-index: 10;
 }
 
-/* Settings Panel */
+/* =========================================================
+   Settings Panel (Fullscreen + Small Screen Safe)
+   ========================================================= */
+
 .chatyplayer-settings-panel {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 12px);
   right: 0;
-  margin-bottom: 8px;
 
-  min-width: 180px;
-  max-height: 320px; /* ✅ prevent overflow */
+  min-width: 200px;
+  max-width: min(260px, calc(100% - 16px)); 
+  max-height: min(320px, calc(100vh - 96px));
   overflow-y: auto;
 
   background: rgba(18, 18, 18, 0.96);
   border-radius: 10px;
-  padding: 10px;
+  padding: 8px;
 
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(10px);
@@ -34,9 +37,11 @@
   transform: translateY(8px) scale(0.98);
   pointer-events: none;
 
-  z-index: 10000;
+  z-index: 20;
 
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Visible */
@@ -46,14 +51,24 @@
   pointer-events: auto;
 }
 
-/* Menu */
+/* =========================================================
+   Menu System (JS compatible)
+   ========================================================= */
+
 .chatyplayer-settings-menu {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: 4px;
 }
 
-/* Section */
+.chatyplayer-settings-menu.active {
+  display: flex;
+}
+
+/* =========================================================
+   Sections
+   ========================================================= */
+
 .chatyplayer-settings-section {
   margin-bottom: 10px;
 }
@@ -71,9 +86,14 @@
   margin-bottom: 6px;
 }
 
-/* Buttons */
+/* =========================================================
+   Buttons
+   ========================================================= */
+
 .chatyplayer-settings-btn {
   width: 100%;
+  min-height: 36px;
+
   padding: 8px 10px;
 
   background: transparent;
@@ -111,7 +131,16 @@
   outline-offset: 2px;
 }
 
-/* Select Dropdown */
+/* Right-side value (› or value text) */
+.chatyplayer-settings-btn span:last-child {
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+/* =========================================================
+   Select Dropdown
+   ========================================================= */
+
 .chatyplayer-settings-select {
   width: 100%;
   padding: 6px 8px;
@@ -126,7 +155,7 @@
   cursor: pointer;
 
   position: relative;
-  z-index: 10001;
+  z-index: 30;
 
   -webkit-appearance: none;
   appearance: none;
@@ -138,35 +167,46 @@
   outline-offset: 2px;
 }
 
-/* Divider */
+/* =========================================================
+   Divider
+   ========================================================= */
+
 .chatyplayer-settings-divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);
   margin: 8px 0;
 }
 
-/* Controls container fix */
+/* =========================================================
+   Controls Fix
+   ========================================================= */
+
 .chatyplayer-controls {
   overflow: visible !important;
 }
 
-/* Scrollbar (optional premium feel) */
+/* =========================================================
+   Scrollbar
+   ========================================================= */
+
 .chatyplayer-settings-panel::-webkit-scrollbar {
   width: 6px;
 }
+
 .chatyplayer-settings-panel::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
 /* =========================================================
-   Responsive
+   Responsive (Tablet)
    ========================================================= */
 
 @media (max-width: 640px) {
   .chatyplayer-settings-panel {
-    min-width: 150px;
-    padding: 8px;
+    bottom: 66px;
+    right: 6px;
+    min-width: 180px;
   }
 
   .chatyplayer-settings-btn {
@@ -175,5 +215,30 @@
 
   .chatyplayer-settings-title {
     font-size: 10px;
+  }
+}
+
+/* =========================================================
+   Responsive (Mobile FIX - IMPORTANT)
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .chatyplayer-settings-wrapper {
+    position: static;
+  }
+
+  .chatyplayer-settings-panel {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 68px;
+
+    min-width: unset;
+    max-width: none;
+    width: auto;
+    max-height: calc(100dvh - 92px);
+
+    border-radius: 12px;
+    z-index: 10020;
   }
 }
