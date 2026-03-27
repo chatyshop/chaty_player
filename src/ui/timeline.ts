@@ -23,7 +23,11 @@ export function createTimeline(
   const events = player.getEvents();
   const thumbnailConfig = player.getConfig().thumbnails;
   const isMobilePreviewMode = (): boolean =>
-    typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches
+    typeof window !== 'undefined' &&
+    (
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(hover: none)').matches
+    )
 
   /* ================= DOM ================= */
 

@@ -152,7 +152,13 @@ export function createThumbnail(
   let rafId: number | null = null;
 
   const update: ThumbnailUpdater = (time, position) => {
-    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 480px)').matches) {
+    if (
+      typeof window !== 'undefined' &&
+      (
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(hover: none)').matches
+      )
+    ) {
       thumb.style.display = 'none';
       return;
     }

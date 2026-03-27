@@ -220,6 +220,32 @@
   }
 }
 
+@media (pointer: coarse) and (max-height: 500px) {
+  .chatyplayer-controls {
+    gap: 6px;
+    padding: 5px 8px;
+    min-height: 40px;
+  }
+
+  .chatyplayer-controls-left,
+  .chatyplayer-controls-right {
+    gap: 6px;
+  }
+
+  .chatyplayer-btn {
+    padding: 4px;
+    font-size: 12px;
+  }
+
+  .chatyplayer-time {
+    font-size: 11px;
+  }
+
+  .chatyplayer-volume-slider {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .chatyplayer-subtitle-menu {
     position: fixed;

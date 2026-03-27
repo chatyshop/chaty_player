@@ -372,6 +372,13 @@
   visibility: hidden;
 }
 
+.chatyplayer-root.chatyplayer-preview-open.hide-ui .chatyplayer-controls-layer,
+.chatyplayer-root.chatyplayer-preview-open.hide-ui .chatyplayer-timeline-layer {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
 .chatyplayer-subtitle-text {
   max-width: 80%;
   color: white;
@@ -413,6 +420,24 @@
     min-width: 140px;
   }
 
+}
+
+@media (pointer: coarse) and (max-height: 500px) {
+  .chatyplayer-controls-layer {
+    height: 40px;
+  }
+
+  .chatyplayer-controls-layer::before {
+    height: 58px;
+  }
+
+  .chatyplayer-timeline-layer {
+    bottom: 40px;
+  }
+
+  .chatyplayer-subtitle-layer {
+    bottom: 48px;
+  }
 }
 
 @media (pointer: coarse) {
