@@ -17,6 +17,13 @@ export function createSettings(
 
   const video = player.getVideo()
   const events = player.getEvents()
+  const theatreSupported = !(
+    typeof window !== 'undefined' &&
+    (
+      window.matchMedia('(pointer: coarse)').matches ||
+      window.matchMedia('(hover: none)').matches
+    )
+  )
   /* ========================================= */
 
   const wrapper = document.createElement('div')
@@ -352,14 +359,6 @@ export function createSettings(
   const viewMenu = createMenu('view')
   createBackButton(viewMenu)
 
-  const theaterBtn = document.createElement('button')
-  theaterBtn.className = 'chatyplayer-settings-btn'
-  theaterBtn.textContent = 'Theater Mode'
-  theaterBtn.addEventListener('click', () => {
-    player.toggleTheatre()
-    closePanel()
-  })
-
   const miniBtn = document.createElement('button')
   miniBtn.className = 'chatyplayer-settings-btn'
   miniBtn.textContent = 'Mini Player'
@@ -368,7 +367,17 @@ export function createSettings(
     closePanel()
   })
 
-  viewMenu.appendChild(theaterBtn)
+  if (theatreSupported) {
+    const theaterBtn = document.createElement('button')
+    theaterBtn.className = 'chatyplayer-settings-btn'
+    theaterBtn.textContent = 'Theater Mode'
+    theaterBtn.addEventListener('click', () => {
+      player.toggleTheatre()
+      closePanel()
+    })
+    viewMenu.appendChild(theaterBtn)
+  }
+
   viewMenu.appendChild(miniBtn)
 
   /* ========================================= */

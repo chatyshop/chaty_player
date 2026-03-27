@@ -43,6 +43,16 @@ export class Player {
   // 🔥 Single source of truth
   private mode: PlayerMode = 'normal'
 
+  private isMobileTheatreDisabled(): boolean {
+    return (
+      typeof window !== 'undefined' &&
+      (
+        window.matchMedia('(pointer: coarse)').matches ||
+        window.matchMedia('(hover: none)').matches
+      )
+    )
+  }
+
   public getMode(): PlayerMode {
     return this.mode
   }
@@ -170,6 +180,7 @@ export class Player {
   ========================================= */
 
   public setMode(next: PlayerMode): void {
+    if (next === 'theatre' && this.isMobileTheatreDisabled()) return
 
     if (this.mode === next) return
 
@@ -218,6 +229,7 @@ export class Player {
   }
 
   public toggleTheatre() {
+    if (this.isMobileTheatreDisabled()) return
     this.setMode(this.mode === 'theatre' ? 'normal' : 'theatre')
   }
 
