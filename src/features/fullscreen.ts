@@ -68,15 +68,11 @@ export function initFullscreenFeature(
     if (next === 'fullscreen') {
       if (!isFullscreen()) {
         Promise.resolve(requestFullscreen()).catch(() => {
-          if (isFullscreen() || player.getMode() !== 'fullscreen') return
+          if (player.getMode() !== 'fullscreen') return
 
-          syncing = true
-          try {
-            player.setMode(prev === 'fullscreen' ? 'normal' : prev)
-            syncFullscreenState(false)
-          } finally {
-            syncing = false
-          }
+          // Keep the class-based fullscreen fallback active on browsers that
+          // cannot enter native fullscreen for a container element.
+          syncFullscreenState(true)
         })
       }
     } else {

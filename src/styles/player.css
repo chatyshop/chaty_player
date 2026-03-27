@@ -255,21 +255,27 @@
    Fullscreen Mode
    ========================================================= */
 
+.chatyplayer-root.chatyplayer-fullscreen,
 .chatyplayer-root:fullscreen,
 .chatyplayer-root:-webkit-full-screen {
   position: fixed;
   inset: 0;
 
   width: 100vw;
+  width: 100dvw;
   height: 100vh;
+  height: 100dvh;
 
   max-width: none;
   margin: 0;
   padding: 0;
 
   background: #000;
+  overflow: hidden;
+  z-index: 10000;
 }
 
+.chatyplayer-root.chatyplayer-fullscreen .chatyplayer-video-wrapper,
 .chatyplayer-root:fullscreen .chatyplayer-video-wrapper,
 .chatyplayer-root:-webkit-full-screen .chatyplayer-video-wrapper {
   position: absolute;
@@ -281,6 +287,7 @@
   aspect-ratio: unset !important;
 }
 
+.chatyplayer-root.chatyplayer-fullscreen video,
 .chatyplayer-root:fullscreen video,
 .chatyplayer-root:-webkit-full-screen video {
   position: absolute;
@@ -290,6 +297,50 @@
   height: 100%;
 
   object-fit: contain;
+}
+
+/* =========================================================
+   Landscape / Mobile Fullscreen Safety
+   ========================================================= */
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .chatyplayer-root.chatyplayer-fullscreen,
+  .chatyplayer-root.chatyplayer-theater {
+    position: fixed;
+    inset: 0;
+
+    width: 100vw;
+    width: 100dvw;
+    height: 100vh;
+    height: 100dvh;
+
+    max-width: none;
+    margin: 0;
+    overflow: hidden;
+    z-index: 10000;
+  }
+
+  .chatyplayer-root.chatyplayer-fullscreen .chatyplayer-video-wrapper,
+  .chatyplayer-root.chatyplayer-theater .chatyplayer-video-wrapper {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    aspect-ratio: unset !important;
+  }
+
+  .chatyplayer-root.chatyplayer-fullscreen video,
+  .chatyplayer-root.chatyplayer-theater video {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+  }
 }
 
 /* =========================================================

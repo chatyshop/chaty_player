@@ -26,12 +26,16 @@ export function initTheaterFeature(
   ) as HTMLElement | null
 
   const ROOT_CLASS = 'chatyplayer-theater-active'
+  const landscapeQuery = window.matchMedia(
+    '(max-width: 900px) and (orientation: landscape)'
+  )
 
   // ✅ Safe style storage
   const styleBackup = new WeakMap<HTMLElement, Partial<CSSStyleDeclaration>>()
 
   let active = false
   let bodyOverflowBackup: string | null = null
+  let viewportListenerCleanup: (() => void) | null = null
 
   /* ========================================= */
 
@@ -58,21 +62,24 @@ export function initTheaterFeature(
     styleBackup.delete(el)
   }
 
-  /* ========================================= */
+  const getViewportSize = () => {
+    const viewport = window.visualViewport
+    return {
+      width: Math.round(viewport?.width ?? window.innerWidth),
+      height: Math.round(viewport?.height ?? window.innerHeight)
+    }
+  }
 
-  const enableTheatre = () => {
-    if (active) return
-    active = true
-
+  const applyLandscapeTheatreLayout = () => {
     saveStyles(container)
     if (wrapper) saveStyles(wrapper)
 
-    container.classList.add(ROOT_CLASS)
+    const { width, height } = getViewportSize()
 
     container.style.position = 'fixed'
     container.style.inset = '0'
-    container.style.width = '100vw'
-    container.style.height = '100vh'
+    container.style.width = `${width}px`
+    container.style.height = `${height}px`
     container.style.margin = '0'
     container.style.maxWidth = 'none'
     container.style.zIndex = '9999'
@@ -82,11 +89,73 @@ export function initTheaterFeature(
       wrapper.style.width = '100%'
       wrapper.style.height = '100%'
     }
+  }
+
+  const clearLandscapeTheatreLayout = () => {
+    container.style.position = ''
+    container.style.inset = ''
+    container.style.width = ''
+    container.style.height = ''
+    container.style.margin = ''
+    container.style.maxWidth = ''
+    container.style.zIndex = ''
+
+    if (wrapper) {
+      wrapper.style.aspectRatio = ''
+      wrapper.style.width = ''
+      wrapper.style.height = ''
+    }
+  }
+
+  const refreshTheatreLayout = () => {
+    if (!active) return
+
+    if (landscapeQuery.matches) {
+      applyLandscapeTheatreLayout()
+    } else {
+      clearLandscapeTheatreLayout()
+    }
+  }
+
+  /* ========================================= */
+
+  const enableTheatre = () => {
+    if (active) return
+    active = true
+
+    container.classList.add(ROOT_CLASS)
+
+    saveStyles(container)
+    if (wrapper) saveStyles(wrapper)
+
+    refreshTheatreLayout()
 
     if (bodyOverflowBackup === null) {
       bodyOverflowBackup = document.body.style.overflow
     }
     document.body.style.overflow = 'hidden'
+
+    const onViewportChange = () => {
+      refreshTheatreLayout()
+    }
+
+    window.addEventListener('resize', onViewportChange, { passive: true })
+    window.addEventListener('orientationchange', onViewportChange, { passive: true })
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', onViewportChange, {
+        passive: true
+      })
+    }
+
+    viewportListenerCleanup = () => {
+      window.removeEventListener('resize', onViewportChange)
+      window.removeEventListener('orientationchange', onViewportChange)
+
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', onViewportChange)
+      }
+    }
 
     state?.set('theater', true)
     events?.emit('theatre', true)
@@ -97,6 +166,9 @@ export function initTheaterFeature(
     active = false
 
     container.classList.remove(ROOT_CLASS)
+
+    viewportListenerCleanup?.()
+    viewportListenerCleanup = null
 
     restoreStyles(container)
     if (wrapper) restoreStyles(wrapper)
